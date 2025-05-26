@@ -179,6 +179,18 @@
             color: #e2e8f0; /* Light text */
             border: 1px solid #4a5568;
         }
+
+        /* Drag and Drop styles */
+        .drop-zone {
+            border: 2px dashed #6366f1; /* Indigo-500 dashed border */
+            background-color: #1a202c; /* Darker background for drop zone */
+            transition: all 0.3s ease-in-out;
+        }
+        .drop-zone.drag-over {
+            border-color: #818cf8; /* Light blue on drag over */
+            background-color: #2d3748; /* Slightly lighter background */
+            box-shadow: 0 0 25px rgba(129, 140, 248, 0.6); /* Glow effect */
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-900 to-black min-h-screen flex flex-col items-center justify-center font-sans text-gray-100 p-4">
@@ -205,10 +217,11 @@
             <span id="fileName" class="text-lg text-gray-400 font-medium tracking-wide" data-lang-key="noFileSelected">未选择文件</span>
         </div>
 
-        <div class="relative w-full aspect-video bg-gray-900 rounded-2xl overflow-hidden shadow-inner border border-gray-700">
+        <div id="dropZone" class="relative w-full aspect-video bg-gray-900 rounded-2xl overflow-hidden shadow-inner border border-gray-700 flex items-center justify-center">
             <video id="videoPlayer" controls class="w-full h-full object-contain"></video>
-            <div id="noVideoMessage" class="absolute inset-0 flex items-center justify-center text-gray-500 text-2xl bg-gray-900" style="display: flex;">
-                <span data-lang-key="pleaseSelectVideo">请选择一个视频文件以开始</span>
+            <div id="noVideoMessage" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 text-2xl bg-gray-900" style="display: flex;">
+                <span data-lang-key="pleaseSelectVideo">请选择或拖放视频文件以开始</span>
+                <span class="text-lg text-gray-600 mt-2" data-lang-key="dragDropHint">将视频文件拖拽到此区域</span>
             </div>
         </div>
 
@@ -316,6 +329,9 @@
         const confirmYes = document.getElementById('confirmClearBtn').querySelector('[data-lang-key="confirmYes"]');
         const confirmNo = document.getElementById('cancelClearBtn').querySelector('[data-lang-key="confirmNo"]');
 
+        // New: Drop Zone element
+        const dropZone = document.getElementById('dropZone');
+
 
         let videoDuration = 0;
         let intervalExtractionTimer = null; // Used to store the timer ID
@@ -329,7 +345,8 @@
                 titlePart2: '提取器',
                 selectVideoFile: '选择视频文件',
                 noFileSelected: '未选择文件',
-                pleaseSelectVideo: '请选择一个视频文件以开始',
+                pleaseSelectVideo: '请选择或拖放视频文件以开始',
+                dragDropHint: '将视频文件拖拽到此区域',
                 extractCurrentFrame: '提取当前帧',
                 intervalSeconds: '间隔 (秒):',
                 extractIntervalFrames: '按间隔提取帧',
@@ -359,7 +376,8 @@
                 titlePart2: 'Extractor',
                 selectVideoFile: 'Select Video File',
                 noFileSelected: 'No file selected',
-                pleaseSelectVideo: 'Please select a video file to start',
+                pleaseSelectVideo: 'Please select or drag & drop a video file to start',
+                dragDropHint: 'Drag and drop video files here',
                 extractCurrentFrame: 'Extract Current Frame',
                 intervalSeconds: 'Interval (seconds):',
                 extractIntervalFrames: 'Extract Frames by Interval',
@@ -447,10 +465,9 @@
         langZhBtn.addEventListener('click', () => setLanguage('zh'));
         langEnBtn.addEventListener('click', () => setLanguage('en'));
 
-        // Handle video file selection
-        videoInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
+        // Handle video file selection (both input and drag-drop will funnel here)
+        function handleVideoFile(file) {
+            if (file && file.type.startsWith('video/')) {
                 fileNameSpan.textContent = file.name;
                 const videoURL = URL.createObjectURL(file);
                 videoPlayer.src = videoURL;
@@ -463,9 +480,47 @@
                 fileNameSpan.textContent = translations[localStorage.getItem('currentLang') || 'zh']['noFileSelected'];
                 videoPlayer.src = '';
                 noVideoMessage.style.display = 'flex'; // Show the message
+                alert('请选择一个有效的视频文件。'); // Alert for invalid file type
             }
             updateButtonStates(); // Update button states after video selection
+        }
+
+        videoInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            handleVideoFile(file);
         });
+
+        // Drag and Drop functionality
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault(); // Prevent default to allow drop
+            e.stopPropagation();
+            dropZone.classList.add('drag-over');
+            noVideoMessage.style.display = 'flex'; // Ensure message is visible during drag
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('drag-over');
+            // If no video is loaded, keep the message visible
+            if (!videoPlayer.src) {
+                noVideoMessage.style.display = 'flex';
+            } else {
+                noVideoMessage.style.display = 'none';
+            }
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault(); // Prevent default file opening in browser
+            e.stopPropagation();
+            dropZone.classList.remove('drag-over');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleVideoFile(files[0]); // Process the first dropped file
+            }
+        });
+
 
         // Get duration and set canvas dimensions after video metadata is loaded
         videoPlayer.addEventListener('loadedmetadata', () => {
