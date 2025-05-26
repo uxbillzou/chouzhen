@@ -383,27 +383,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0 mt-6 pt-4 border-t border-gray-700 w-full px-4">
-                <div class="flex items-center space-x-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <span class="text-lg text-gray-300" data-lang-key="visitsCount">访问量: </span>
-                    <span id="visitCountDisplay" class="text-xl font-bold text-indigo-300">0</span>
-                </div>
-                <p id="userIdDisplay" class="text-xs text-gray-500">用户ID: 加载中...</p>
-                <div class="flex items-center space-x-2">
-                    <button id="likeButton" class="btn btn-primary btn-sm" disabled>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                        <span data-lang-key="likeButtonText">点赞</span>
-                    </button>
-                    <span id="likeCountDisplay" class="text-xl font-bold text-indigo-300">0</span>
-                </div>
-            </div>
-        </footer>
+            </footer>
 
         <canvas id="hiddenCanvas" class="hidden"></canvas>
     </main>
@@ -428,11 +408,11 @@
         </div>
     </div>
 
-    <script type="module">
-        // Firebase SDK Imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, increment, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        // Removed all Firebase SDK Imports
+        // import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // import { getFirestore, doc, setDoc, onSnapshot, increment, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // UI Elements
         const videoInput = document.getElementById('videoInput');
@@ -460,29 +440,25 @@
         
         const dropZone = document.getElementById('dropZone');
 
-        // Stats Elements
-        const visitCountDisplay = document.getElementById('visitCountDisplay');
-        const likeButton = document.getElementById('likeButton');
-        const likeCountDisplay = document.getElementById('likeCountDisplay');
-        const userIdDisplay = document.getElementById('userIdDisplay');
+        // Stats Elements (All Firebase-related elements removed)
+        // const visitCountDisplay = document.getElementById('visitCountDisplay'); // Removed
+        // const likeButton = document.getElementById('likeButton'); // Removed
+        // const likeCountDisplay = document.getElementById('likeCountDisplay'); // Removed
+        // const userIdDisplay = document.getElementById('userIdDisplay'); // Removed
         const donorsScrollContainer = document.getElementById('donorsScrollContainer');
         const donorsScrollContent = document.getElementById('donorsScrollContent');
 
 
-        // Global Variables
+        // Global Variables (Firebase related ones removed)
         let videoDuration = 0;
         let intervalExtractionTimer = null;
         let frameCounter = 0;
-        let db; // Firestore instance
-        let auth; // Auth instance
-        let appId; // Application ID
-        let userId; // User ID
-        let userHasLiked = false; // Track if current user has liked
-        let isAuthReady = false; // Flag to ensure Firebase Auth is ready
-
-        // Firebase Document References (Declared globally for scope)
-        let globalStatsDocRef; // Document to hold visits_count and likes_count
-        let userLikeDocRef; // Document to track user's like status for this app
+        // let db; // Removed
+        // let auth; // Removed
+        // let appId; // Removed
+        // let userId; // Removed
+        // let isAuthReady = false; // Removed
+        // let globalStatsDocRef; // Removed
 
         // Translations object
         const translations = {
@@ -517,10 +493,10 @@
                 confirmYes: '确定',
                 confirmNo: '取消',
                 refreshConfirm: '刷新页面将丢失所有已提取的帧。您确定要继续吗？',
-                appStatsTitle: '应用统计',
-                visitsCount: '访问量: ',
-                likeButtonText: '点赞',
-                likedButtonText: '已点赞',
+                // appStatsTitle: '应用统计', // Removed
+                // visitsCount: '访问量: ', // Removed
+                // likeButtonText: '点赞', // Removed
+                // likedButtonText: '已点赞', // Removed
                 donorsListTitle: '打赏榜'
             },
             en: {
@@ -554,10 +530,10 @@
                 confirmYes: 'Confirm',
                 confirmNo: 'Cancel',
                 refreshConfirm: 'Refreshing the page will clear all extracted frames. Are you sure you want to proceed?',
-                appStatsTitle: 'App Statistics',
-                visitsCount: 'Visits: ',
-                likeButtonText: 'Like',
-                likedButtonText: 'Liked',
+                // appStatsTitle: 'App Statistics', // Removed
+                // visitsCount: 'Visits: ', // Removed
+                // likeButtonText: 'Like', // Removed
+                // likedButtonText: 'Liked', // Removed
                 donorsListTitle: 'Donation Leaderboard'
             }
         };
@@ -570,7 +546,7 @@
             { name: "张丽", amount: "¥2.50", time: "今天 16:28" },
             { name: "陈强", amount: "¥15.00", time: "今天 16:35" },
             { name: "杨敏", amount: "¥8.88", time: "今天 16:42" },
-            { name: "黄磊", amount: "¥30.00", time: "今天 16:50" },
+            { name: "黄磊", "amount": "¥30.00", time: "今天 16:50" },
             { name: "吴静", amount: "¥1.00", time: "今天 16:58" },
             { name: "周涛", amount: "¥7.77", time: "今天 17:05" },
             { name: "孙悦", amount: "¥12.34", time: "今天 17:12" }
@@ -715,14 +691,6 @@
             langEnBtn.classList.toggle('active', lang === 'en');
             localStorage.setItem('currentLang', lang);
 
-            // Update like button text specifically
-            if (likeButton) { 
-                if (userHasLiked) {
-                    likeButton.querySelector('span').textContent = translations[lang]['likedButtonText'];
-                } else {
-                    likeButton.querySelector('span').textContent = translations[lang]['likeButtonText'];
-                }
-            }
             // Update modal text specifically
             if (confirmationModal) {
                 const currentLang = localStorage.getItem('currentLang') || 'zh';
@@ -754,23 +722,6 @@
             if (downloadAllFramesBtn) downloadAllFramesBtn.disabled = !hasFrames;
             if (downloadSelectedFramesBtn) downloadSelectedFramesBtn.disabled = !hasSelectedFrames;
 
-            // Like button state: enabled only if auth is ready and user hasn't liked yet
-            if (likeButton) { 
-                likeButton.disabled = !isAuthReady || userHasLiked;
-                if (likeButton.disabled) {
-                    likeButton.classList.add('btn-disabled');
-                } else {
-                    likeButton.classList.remove('btn-disabled');
-                }
-                const currentLang = localStorage.getItem('currentLang') || 'zh';
-                if (userHasLiked) {
-                    likeButton.querySelector('span').textContent = translations[currentLang]['likedButtonText'];
-                } else {
-                    likeButton.querySelector('span').textContent = translations[currentLang]['likeButtonText'];
-                }
-            }
-
-
             [extractCurrentFrameBtn, extractIntervalFramesBtn, extractFirstLastBtn, clearFramesBtn, downloadAllFramesBtn, downloadSelectedFramesBtn].forEach(button => {
                 if (button) { 
                     button.classList.toggle('btn-disabled', button.disabled);
@@ -778,129 +729,32 @@
             });
         }
 
-        // Firebase Initialization and Auth
-        async function initializeFirebaseAndAuth() {
-            try {
-                const firebaseConfig = typeof window.__firebase_config !== 'undefined' ? JSON.parse(window.__firebase_config) : {};
-                appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
+        // Removed Firebase Initialization and Auth related functions
+        /*
+        async function initializeFirebaseAndAuth() { ... }
+        async function handleAppStats() { ... }
+        */
 
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        if (userIdDisplay) userIdDisplay.textContent = `用户ID: ${userId}`; 
-                        isAuthReady = true;
-                        // Initialize Firestore references after userId is available
-                        globalStatsDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'app_stats', 'global_metrics');
-                        userLikeDocRef = doc(db, 'artifacts', appId, 'users', userId, 'liked_apps', 'this_app');
-                        
-                        await handleAppStats(); 
-                    } else {
-                        if (typeof window.__initial_auth_token !== 'undefined') {
-                            await signInWithCustomToken(auth, window.__initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    }
-                    updateButtonStates(); 
-                });
-
-            } catch (error) {
-                console.error("Error initializing Firebase or signing in:", error);
-                if (userIdDisplay) userIdDisplay.textContent = "用户ID: 加载失败"; 
-                isAuthReady = false;
-                updateButtonStates();
-            }
+        // Keeping a placeholder for visit count display update, but it's now static.
+        function updateVisitCountDisplay() {
+            // visitCountDisplay is removed from HTML, so this function is no longer needed.
+            // If you wish to re-add a static visit count, you would need to add the HTML element back
+            // and then uncomment and use this function.
         }
 
-        // Handle App Statistics (Visits and Likes)
-        async function handleAppStats() {
-            if (!db || !userId || !appId) {
-                console.warn("Firebase references not fully initialized for stats.");
-                return; 
-            }
-            // Ensure globalStatsDocRef and userLikeDocRef are initialized before use
-            if (!globalStatsDocRef || !userLikeDocRef) {
-                console.warn("Firebase document references not yet set up for stats.");
-                return;
-            }
 
-            // Use a transaction to safely increment/initialize visit count
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const docSnap = await transaction.get(globalStatsDocRef);
-                    if (!docSnap.exists()) {
-                        // Document does not exist, initialize with 1256 visits and 0 likes
-                        transaction.set(globalStatsDocRef, { visits_count: 1256, likes_count: 0 });
-                    } else {
-                        // Document exists, increment visits_count
-                        transaction.update(globalStatsDocRef, { visits_count: increment(1) });
-                    }
-                });
-            } catch (error) {
-                console.error("Error updating visit count in transaction:", error);
-            }
-
-            // Set up real-time listener for global stats document
-            onSnapshot(globalStatsDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (visitCountDisplay) visitCountDisplay.textContent = data.visits_count !== undefined ? data.visits_count : '0';
-                    if (likeCountDisplay) likeCountDisplay.textContent = data.likes_count !== undefined ? data.likes_count : '0';
-                } else {
-                    if (visitCountDisplay) visitCountDisplay.textContent = '0';
-                    if (likeCountDisplay) likeCountDisplay.textContent = '0';
-                }
-            });
-
-            // Check if user has already liked
-            try {
-                const userLikeSnap = await getDoc(userLikeDocRef);
-                if (userLikeSnap.exists()) {
-                    userHasLiked = true;
-                } else {
-                    userHasLiked = false;
-                }
-                updateButtonStates(); 
-            } catch (error) {
-                console.error("Error checking user like status:", error);
-                userHasLiked = false; 
-                updateButtonStates();
-            }
-        }
-
-        // Initialize Firebase and Auth on page load
-        initializeFirebaseAndAuth();
-
-        // Initial language setup and button states
+        // Initialize (Removed Firebase init, now just UI setup)
         const savedLang = localStorage.getItem('currentLang') || 'zh';
         setLanguage(savedLang);
         updateButtonStates();
-        window.addEventListener('load', populateDonorsList); // Populate donors list on load after all elements are rendered
+        window.addEventListener('load', () => {
+            populateDonorsList();
+            // updateVisitCountDisplay(); // Removed call as element is gone
+        });
 
         // Language toggle event listeners
         langZhBtn.addEventListener('click', () => setLanguage('zh'));
         langEnBtn.addEventListener('click', () => setLanguage('en'));
-
-        // Like button click handler
-        if (likeButton) { 
-            likeButton.addEventListener('click', async () => {
-                if (!db || !userId || !appId || !globalStatsDocRef || !userLikeDocRef || userHasLiked) return; 
-
-                try {
-                    await setDoc(globalStatsDocRef, { likes_count: increment(1) }, { merge: true });
-                    await setDoc(userLikeDocRef, { liked: true });
-                    userHasLiked = true;
-                    updateButtonStates(); 
-                } catch (error) {
-                    console.error("Error liking the app:", error);
-                    alert("点赞失败，请稍后再试。"); 
-                }
-            });
-        }
 
         // Handle video file selection (both input and drag-drop will funnel here)
         function processVideoSource(source) {
