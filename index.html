@@ -246,6 +246,35 @@
             background-color: #2d3748; /* Slightly lighter background */
             box-shadow: 0 0 25px rgba(129, 140, 248, 0.6); /* Glow effect */
         }
+
+        /* Donation Scroll Animation */
+        #donorsScrollContent {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            /* Removed animation property here, will be set dynamically by JS */
+        }
+        .donor-item {
+            padding: 0.25rem 0;
+            font-size: 0.875rem; /* text-sm */
+            color: #9ca3af; /* gray-400 */
+            white-space: nowrap; /* Prevent text wrapping */
+            overflow: hidden;
+            text-overflow: ellipsis; /* Add ellipsis if text is too long */
+            height: 24px; /* Fixed height for each item to ensure consistent scrolling */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .donor-item span {
+            color: #c7d2fe; /* indigo-200 for names and amounts */
+            font-weight: 500;
+        }
+        .donor-item .time {
+            font-size: 0.75rem; /* text-xs */
+            color: #6b7280; /* gray-500 */
+        }
     </style>
 </head>
 <body class="bg-gray-900 min-h-screen flex flex-col items-center justify-start font-sans text-gray-200 p-4 md:p-8">
@@ -345,6 +374,35 @@
             <div class="flex justify-center">
                 <img src="wechat.png" alt="赞赏二维码" class="w-40 h-40 rounded-lg shadow-lg border-2 border-gray-600 object-contain">
             </div>
+
+            <div class="mt-6 pt-4 border-t border-gray-700 space-y-2">
+                <h3 class="text-xl font-semibold text-gray-300" data-lang-key="donorsListTitle">打赏榜</h3>
+                <div id="donorsScrollContainer" class="h-6 overflow-hidden relative bg-gray-900 rounded-lg p-0 border border-gray-700">
+                    <div id="donorsScrollContent" class="absolute inset-0">
+                        </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0 mt-6 pt-4 border-t border-gray-700 w-full px-4">
+                <div class="flex items-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span class="text-lg text-gray-300" data-lang-key="visitsCount">访问量: </span>
+                    <span id="visitCountDisplay" class="text-xl font-bold text-indigo-300">0</span>
+                </div>
+                <p id="userIdDisplay" class="text-xs text-gray-500">用户ID: 加载中...</p>
+                <div class="flex items-center space-x-2">
+                    <button id="likeButton" class="btn btn-primary btn-sm" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        <span data-lang-key="likeButtonText">点赞</span>
+                    </button>
+                    <span id="likeCountDisplay" class="text-xl font-bold text-indigo-300">0</span>
+                </div>
+            </div>
         </footer>
 
         <canvas id="hiddenCanvas" class="hidden"></canvas>
@@ -370,7 +428,13 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        // Firebase SDK Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, increment, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // UI Elements
         const videoInput = document.getElementById('videoInput');
         const fileNameSpan = document.getElementById('fileName');
         const videoPlayer = document.getElementById('videoPlayer');
@@ -381,7 +445,7 @@
         const clearFramesBtn = document.getElementById('clearFramesBtn');
         const downloadAllFramesBtn = document.getElementById('downloadAllFramesBtn');
         const downloadSelectedFramesBtn = document.getElementById('downloadSelectedFramesBtn');
-        const extractFirstLastBtn = document.getElementById('extractFirstLastBtn'); // New button element
+        const extractFirstLastBtn = document.getElementById('extractFirstLastBtn');
         const extractedFramesContainer = document.getElementById('extractedFramesContainer');
         const hiddenCanvas = document.getElementById('hiddenCanvas');
         const ctx = hiddenCanvas.getContext('2d');
@@ -396,10 +460,31 @@
         
         const dropZone = document.getElementById('dropZone');
 
+        // Stats Elements
+        const visitCountDisplay = document.getElementById('visitCountDisplay');
+        const likeButton = document.getElementById('likeButton');
+        const likeCountDisplay = document.getElementById('likeCountDisplay');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const donorsScrollContainer = document.getElementById('donorsScrollContainer');
+        const donorsScrollContent = document.getElementById('donorsScrollContent');
+
+
+        // Global Variables
         let videoDuration = 0;
         let intervalExtractionTimer = null;
         let frameCounter = 0;
+        let db; // Firestore instance
+        let auth; // Auth instance
+        let appId; // Application ID
+        let userId; // User ID
+        let userHasLiked = false; // Track if current user has liked
+        let isAuthReady = false; // Flag to ensure Firebase Auth is ready
 
+        // Firebase Document References (Declared globally for scope)
+        let globalStatsDocRef; // Document to hold visits_count and likes_count
+        let userLikeDocRef; // Document to track user's like status for this app
+
+        // Translations object
         const translations = {
             zh: {
                 pageTitle: '视频帧提取器 - 专业版',
@@ -412,7 +497,7 @@
                 extractCurrentFrame: '提取当前帧',
                 intervalSeconds: '提取间隔 (秒):',
                 extractIntervalFrames: '按间隔提取',
-                extractFirstLast: '一键提取首尾帧', // New translation
+                extractFirstLast: '一键提取首尾帧',
                 clearFrames: '清空帧',
                 downloadAllFrames: '下载所有帧 (ZIP)',
                 downloadSelectedFrames: '下载选中帧 (ZIP)',
@@ -431,7 +516,12 @@
                 confirmMessage: '您确定要清空所有已提取的帧吗？此操作不可撤销。',
                 confirmYes: '确定',
                 confirmNo: '取消',
-                refreshConfirm: '刷新页面将丢失所有已提取的帧。您确定要继续吗？'
+                refreshConfirm: '刷新页面将丢失所有已提取的帧。您确定要继续吗？',
+                appStatsTitle: '应用统计',
+                visitsCount: '访问量: ',
+                likeButtonText: '点赞',
+                likedButtonText: '已点赞',
+                donorsListTitle: '打赏榜'
             },
             en: {
                 pageTitle: 'Video Frame Extractor - Pro',
@@ -444,7 +534,7 @@
                 extractCurrentFrame: 'Extract Current Frame',
                 intervalSeconds: 'Extraction Interval (sec):',
                 extractIntervalFrames: 'Extract by Interval',
-                extractFirstLast: 'Extract First/Last Frame', // New translation
+                extractFirstLast: 'Extract First/Last Frame',
                 clearFrames: 'Clear Frames',
                 downloadAllFrames: 'Download All Frames (ZIP)',
                 downloadSelectedFrames: 'Download Selected Frames (ZIP)',
@@ -463,9 +553,110 @@
                 confirmMessage: 'Are you sure you want to clear all extracted frames? This action cannot be undone.',
                 confirmYes: 'Confirm',
                 confirmNo: 'Cancel',
-                refreshConfirm: 'Refreshing the page will clear all extracted frames. Are you sure you want to proceed?'
+                refreshConfirm: 'Refreshing the page will clear all extracted frames. Are you sure you want to proceed?',
+                appStatsTitle: 'App Statistics',
+                visitsCount: 'Visits: ',
+                likeButtonText: 'Like',
+                likedButtonText: 'Liked',
+                donorsListTitle: 'Donation Leaderboard'
             }
         };
+
+        // Mock Donation Data (AI-generated simulation)
+        const mockDonationData = [
+            { name: "李明", amount: "¥10.00", time: "今天 16:05" },
+            { name: "王芳", amount: "¥5.00", time: "今天 16:12" },
+            { name: "刘伟", amount: "¥20.00", time: "今天 16:20" },
+            { name: "张丽", amount: "¥2.50", time: "今天 16:28" },
+            { name: "陈强", amount: "¥15.00", time: "今天 16:35" },
+            { name: "杨敏", amount: "¥8.88", time: "今天 16:42" },
+            { name: "黄磊", amount: "¥30.00", time: "今天 16:50" },
+            { name: "吴静", amount: "¥1.00", time: "今天 16:58" },
+            { name: "周涛", amount: "¥7.77", time: "今天 17:05" },
+            { name: "孙悦", amount: "¥12.34", time: "今天 17:12" }
+        ];
+
+        // Function to populate and start scrolling donors list
+        let scrollInterval;
+        let currentScrollIndex = 0;
+        let donorItemHeight = 0; // Will be calculated dynamically
+
+        function populateDonorsList() {
+            donorsScrollContent.innerHTML = ''; // Clear existing content
+
+            const createDonorItem = (donor) => {
+                const div = document.createElement('div');
+                div.classList.add('donor-item');
+                div.innerHTML = `
+                    <span class="font-bold">${donor.name}</span>
+                    <span class="mx-1">${translations[localStorage.getItem('currentLang') || 'zh']['appreciationText'].includes('打赏') ? '打赏' : 'donated'}</span>
+                    <span class="font-bold text-green-400">${donor.amount}</span>
+                    <span class="time ml-2">${donor.time}</span>
+                `;
+                return div;
+            };
+
+            // Append original data
+            mockDonationData.forEach(donor => {
+                donorsScrollContent.appendChild(createDonorItem(donor));
+            });
+
+            // Append a copy of data for seamless looping (at least one full set)
+            // This ensures smooth transition when looping back to the start
+            mockDonationData.forEach(donor => {
+                donorsScrollContent.appendChild(createDonorItem(donor));
+            });
+            // Add a few more copies to ensure content is taller than container for continuous scroll
+            mockDonationData.forEach(donor => {
+                donorsScrollContent.appendChild(createDonorItem(donor));
+            });
+
+
+            // Measure item height after they are added to DOM
+            if (donorsScrollContent.children.length > 0) {
+                donorItemHeight = donorsScrollContent.children[0].offsetHeight;
+            } else {
+                return; // No items to scroll
+            }
+
+            // Stop any existing scroll
+            if (scrollInterval) {
+                clearInterval(scrollInterval);
+            }
+
+            // If content is shorter than container, no need to scroll
+            if (donorsScrollContent.scrollHeight <= donorsScrollContainer.clientHeight) {
+                donorsScrollContent.style.animation = 'none';
+                donorsScrollContent.style.transform = 'translateY(0)';
+                return;
+            }
+
+            // Start scrolling
+            currentScrollIndex = 0;
+            donorsScrollContent.style.transition = 'none'; // Initially no transition for first positioning
+            donorsScrollContent.style.transform = `translateY(0px)`;
+
+            // Force reflow to apply the non-transitioned transform
+            donorsScrollContent.offsetHeight; 
+
+            // Re-enable transition for subsequent scrolls
+            donorsScrollContent.style.transition = 'transform 1s ease-in-out'; 
+
+            scrollInterval = setInterval(() => {
+                currentScrollIndex++;
+                // If scrolled past the original set of items, reset to start
+                if (currentScrollIndex >= mockDonationData.length) {
+                    currentScrollIndex = 0;
+                    donorsScrollContent.style.transition = 'none'; // Remove transition for instant jump
+                    donorsScrollContent.style.transform = `translateY(0px)`;
+                    // Force reflow to apply the non-transitioned transform before re-enabling transition
+                    donorsScrollContent.offsetHeight; 
+                    donorsScrollContent.style.transition = 'transform 1s ease-in-out'; // Re-enable transition
+                }
+                donorsScrollContent.style.transform = `translateY(-${currentScrollIndex * donorItemHeight}px)`;
+            }, 3000); // Scroll every 3 seconds (adjust as needed)
+        }
+
 
         // Helper function to create a frame element and append it
         function createFrameElement(imgDataUrl, filename, time) {
@@ -506,15 +697,47 @@
             elements.forEach(element => {
                 const key = element.getAttribute('data-lang-key');
                 if (translations[lang][key]) {
-                    element.textContent = translations[lang][key];
+                    if (element.tagName === 'INPUT' && element.hasAttribute('placeholder')) {
+                        element.setAttribute('placeholder', translations[lang][key]);
+                    } else {
+                        element.textContent = translations[lang][key];
+                    }
                 }
             });
             document.title = translations[lang]['pageTitle'];
-            fileNameSpan.textContent = videoInput.files[0] ? videoInput.files[0].name : translations[lang]['noFileSelected'];
+            if (videoInput.files && videoInput.files[0]) { // Check if file is selected
+                fileNameSpan.textContent = videoInput.files[0].name;
+            } else {
+                fileNameSpan.textContent = translations[lang]['noFileSelected'];
+            }
             
             langZhBtn.classList.toggle('active', lang === 'zh');
             langEnBtn.classList.toggle('active', lang === 'en');
             localStorage.setItem('currentLang', lang);
+
+            // Update like button text specifically
+            if (likeButton) { 
+                if (userHasLiked) {
+                    likeButton.querySelector('span').textContent = translations[lang]['likedButtonText'];
+                } else {
+                    likeButton.querySelector('span').textContent = translations[lang]['likeButtonText'];
+                }
+            }
+            // Update modal text specifically
+            if (confirmationModal) {
+                const currentLang = localStorage.getItem('currentLang') || 'zh';
+                const modalTitleElement = confirmationModal.querySelector('[data-lang-key="confirmTitle"]');
+                const modalMessageElement = confirmationModal.querySelector('[data-lang-key="confirmMessage"]');
+                const modalYesElement = confirmationModal.querySelector('[data-lang-key="confirmYes"]');
+                const modalNoElement = confirmationModal.querySelector('[data-lang-key="confirmNo"]');
+
+                if (modalTitleElement) modalTitleElement.textContent = translations[currentLang]['confirmTitle'];
+                if (modalMessageElement) modalMessageElement.textContent = translations[currentLang]['confirmMessage'];
+                if (modalYesElement) modalYesElement.textContent = translations[currentLang]['confirmYes'];
+                if (modalNoElement) modalNoElement.textContent = translations[currentLang]['confirmNo'];
+            }
+            // Re-populate donors list to update language in donor items
+            populateDonorsList();
         }
 
         // Function to update button states (enabled/disabled)
@@ -523,26 +746,161 @@
             const hasFrames = extractedFramesContainer.children.length > 0;
             const hasSelectedFrames = extractedFramesContainer.querySelectorAll('.frame-wrapper[data-selected="true"]').length > 0;
 
-            extractCurrentFrameBtn.disabled = !hasVideo;
-            extractIntervalFramesBtn.disabled = !hasVideo;
-            extractFirstLastBtn.disabled = !hasVideo; // New button state
-            clearFramesBtn.disabled = !hasFrames;
-            downloadAllFramesBtn.disabled = !hasFrames;
-            downloadSelectedFramesBtn.disabled = !hasSelectedFrames;
+            // Ensure buttons exist before trying to access their properties
+            if (extractCurrentFrameBtn) extractCurrentFrameBtn.disabled = !hasVideo;
+            if (extractIntervalFramesBtn) extractIntervalFramesBtn.disabled = !hasVideo;
+            if (extractFirstLastBtn) extractFirstLastBtn.disabled = !hasVideo; 
+            if (clearFramesBtn) clearFramesBtn.disabled = !hasFrames;
+            if (downloadAllFramesBtn) downloadAllFramesBtn.disabled = !hasFrames;
+            if (downloadSelectedFramesBtn) downloadSelectedFramesBtn.disabled = !hasSelectedFrames;
+
+            // Like button state: enabled only if auth is ready and user hasn't liked yet
+            if (likeButton) { 
+                likeButton.disabled = !isAuthReady || userHasLiked;
+                if (likeButton.disabled) {
+                    likeButton.classList.add('btn-disabled');
+                } else {
+                    likeButton.classList.remove('btn-disabled');
+                }
+                const currentLang = localStorage.getItem('currentLang') || 'zh';
+                if (userHasLiked) {
+                    likeButton.querySelector('span').textContent = translations[currentLang]['likedButtonText'];
+                } else {
+                    likeButton.querySelector('span').textContent = translations[currentLang]['likeButtonText'];
+                }
+            }
+
 
             [extractCurrentFrameBtn, extractIntervalFramesBtn, extractFirstLastBtn, clearFramesBtn, downloadAllFramesBtn, downloadSelectedFramesBtn].forEach(button => {
-                button.classList.toggle('btn-disabled', button.disabled);
+                if (button) { 
+                    button.classList.toggle('btn-disabled', button.disabled);
+                }
             });
         }
 
-        // Initialize language on page load
+        // Firebase Initialization and Auth
+        async function initializeFirebaseAndAuth() {
+            try {
+                const firebaseConfig = typeof window.__firebase_config !== 'undefined' ? JSON.parse(window.__firebase_config) : {};
+                appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
+
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        if (userIdDisplay) userIdDisplay.textContent = `用户ID: ${userId}`; 
+                        isAuthReady = true;
+                        // Initialize Firestore references after userId is available
+                        globalStatsDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'app_stats', 'global_metrics');
+                        userLikeDocRef = doc(db, 'artifacts', appId, 'users', userId, 'liked_apps', 'this_app');
+                        
+                        await handleAppStats(); 
+                    } else {
+                        if (typeof window.__initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, window.__initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    }
+                    updateButtonStates(); 
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase or signing in:", error);
+                if (userIdDisplay) userIdDisplay.textContent = "用户ID: 加载失败"; 
+                isAuthReady = false;
+                updateButtonStates();
+            }
+        }
+
+        // Handle App Statistics (Visits and Likes)
+        async function handleAppStats() {
+            if (!db || !userId || !appId) {
+                console.warn("Firebase references not fully initialized for stats.");
+                return; 
+            }
+            // Ensure globalStatsDocRef and userLikeDocRef are initialized before use
+            if (!globalStatsDocRef || !userLikeDocRef) {
+                console.warn("Firebase document references not yet set up for stats.");
+                return;
+            }
+
+            // Use a transaction to safely increment/initialize visit count
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const docSnap = await transaction.get(globalStatsDocRef);
+                    if (!docSnap.exists()) {
+                        // Document does not exist, initialize with 1256 visits and 0 likes
+                        transaction.set(globalStatsDocRef, { visits_count: 1256, likes_count: 0 });
+                    } else {
+                        // Document exists, increment visits_count
+                        transaction.update(globalStatsDocRef, { visits_count: increment(1) });
+                    }
+                });
+            } catch (error) {
+                console.error("Error updating visit count in transaction:", error);
+            }
+
+            // Set up real-time listener for global stats document
+            onSnapshot(globalStatsDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (visitCountDisplay) visitCountDisplay.textContent = data.visits_count !== undefined ? data.visits_count : '0';
+                    if (likeCountDisplay) likeCountDisplay.textContent = data.likes_count !== undefined ? data.likes_count : '0';
+                } else {
+                    if (visitCountDisplay) visitCountDisplay.textContent = '0';
+                    if (likeCountDisplay) likeCountDisplay.textContent = '0';
+                }
+            });
+
+            // Check if user has already liked
+            try {
+                const userLikeSnap = await getDoc(userLikeDocRef);
+                if (userLikeSnap.exists()) {
+                    userHasLiked = true;
+                } else {
+                    userHasLiked = false;
+                }
+                updateButtonStates(); 
+            } catch (error) {
+                console.error("Error checking user like status:", error);
+                userHasLiked = false; 
+                updateButtonStates();
+            }
+        }
+
+        // Initialize Firebase and Auth on page load
+        initializeFirebaseAndAuth();
+
+        // Initial language setup and button states
         const savedLang = localStorage.getItem('currentLang') || 'zh';
         setLanguage(savedLang);
         updateButtonStates();
+        window.addEventListener('load', populateDonorsList); // Populate donors list on load after all elements are rendered
 
         // Language toggle event listeners
         langZhBtn.addEventListener('click', () => setLanguage('zh'));
         langEnBtn.addEventListener('click', () => setLanguage('en'));
+
+        // Like button click handler
+        if (likeButton) { 
+            likeButton.addEventListener('click', async () => {
+                if (!db || !userId || !appId || !globalStatsDocRef || !userLikeDocRef || userHasLiked) return; 
+
+                try {
+                    await setDoc(globalStatsDocRef, { likes_count: increment(1) }, { merge: true });
+                    await setDoc(userLikeDocRef, { liked: true });
+                    userHasLiked = true;
+                    updateButtonStates(); 
+                } catch (error) {
+                    console.error("Error liking the app:", error);
+                    alert("点赞失败，请稍后再试。"); 
+                }
+            });
+        }
 
         // Handle video file selection (both input and drag-drop will funnel here)
         function processVideoSource(source) {
@@ -555,7 +913,7 @@
                 videoPlayer.classList.remove('hidden');
                 noVideoMessage.classList.add('hidden');
             } else {
-                alert('请选择一个有效的视频文件。');
+                alert('请选择一个有效的视频文件。'); 
                 videoPlayer.src = '';
                 videoPlayer.classList.add('hidden');
                 noVideoMessage.classList.remove('hidden');
@@ -648,7 +1006,7 @@
         function extractFrame(time) {
             return new Promise((resolve, reject) => {
                 const currentLang = localStorage.getItem('currentLang') || 'zh';
-                if (!videoPlayer.src || videoPlayer.readyState < 2) { // Check if video is loaded and ready
+                if (!videoPlayer.src || videoPlayer.readyState < 2) { 
                     console.error(translations[currentLang]['noVideoFile']);
                     reject(new Error(translations[currentLang]['noVideoFile']));
                     return;
@@ -706,9 +1064,9 @@
             let currentTime = 0;
             videoPlayer.currentTime = 0;
 
-            const startExtraction = async () => { // Made async to await extractFrame
+            const startExtraction = async () => { 
                 if (currentTime <= videoDuration) {
-                    await extractFrame(currentTime); // Await here
+                    await extractFrame(currentTime); 
                     currentTime += interval;
                 } else {
                     clearInterval(intervalExtractionTimer);
@@ -722,7 +1080,6 @@
             intervalExtractionTimer = setInterval(startExtraction, interval * 1000); 
         });
 
-        // New: Extract First and Last Frame Button Logic
         extractFirstLastBtn.addEventListener('click', async () => {
             const currentLang = localStorage.getItem('currentLang') || 'zh';
             if (!videoPlayer.src || videoPlayer.readyState < 2) {
@@ -730,26 +1087,22 @@
                 return;
             }
 
-            loadingOverlay.classList.remove('hidden'); // Show loading overlay
+            loadingOverlay.classList.remove('hidden'); 
 
             try {
-                // Extract first frame
                 const firstFrameElement = await extractFrame(0);
-                // Extract last frame
                 const lastFrameElement = await extractFrame(videoDuration);
 
-                // Prepare frames for download
                 const framesToDownload = [firstFrameElement, lastFrameElement];
 
-                // Call download function
                 await downloadFramesAsZip(framesToDownload, '首尾帧.zip');
 
             } catch (error) {
                 console.error('提取首尾帧并下载时发生错误:', error);
                 alert(translations[currentLang]['downloadError']);
             } finally {
-                loadingOverlay.classList.add('hidden'); // Hide loading overlay
-                updateButtonStates(); // Update button states after operation
+                loadingOverlay.classList.add('hidden'); 
+                updateButtonStates(); 
             }
         });
 
@@ -757,10 +1110,15 @@
         clearFramesBtn.addEventListener('click', () => {
             confirmationModal.classList.remove('hidden');
             const currentLang = localStorage.getItem('currentLang') || 'zh';
-            confirmationModal.querySelector('[data-lang-key="confirmTitle"]').textContent = translations[currentLang]['confirmTitle'];
-            confirmationModal.querySelector('[data-lang-key="confirmMessage"]').textContent = translations[currentLang]['confirmMessage'];
-            confirmationModal.querySelector('[data-lang-key="confirmYes"]').textContent = translations[currentLang]['confirmYes'];
-            confirmationModal.querySelector('[data-lang-key="confirmNo"]').textContent = translations[currentLang]['confirmNo'];
+            const modalTitleElement = confirmationModal.querySelector('[data-lang-key="confirmTitle"]');
+            const modalMessageElement = confirmationModal.querySelector('[data-lang-key="confirmMessage"]');
+            const modalYesElement = confirmationModal.querySelector('[data-lang-key="confirmYes"]');
+            const modalNoElement = confirmationModal.querySelector('[data-lang-key="confirmNo"]');
+
+            if (modalTitleElement) modalTitleElement.textContent = translations[currentLang]['confirmTitle'];
+            if (modalMessageElement) modalMessageElement.textContent = translations[currentLang]['confirmMessage'];
+            if (modalYesElement) modalYesElement.textContent = translations[currentLang]['confirmYes'];
+            if (modalNoElement) modalNoElement.textContent = translations[currentLang]['confirmNo'];
         });
 
         confirmClearBtn.addEventListener('click', () => {
