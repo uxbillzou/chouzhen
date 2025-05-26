@@ -234,6 +234,18 @@
             color: #d1d5db; /* gray-300 */
             border: 1px solid #374151; /* gray-700 */
         }
+
+        /* Drag and Drop styles */
+        .drop-zone {
+            border: 2px dashed #6366f1; /* Indigo-500 dashed border */
+            background-color: #1a202c; /* Darker background for drop zone */
+            transition: all 0.3s ease-in-out;
+        }
+        .drop-zone.drag-over {
+            border-color: #818cf8; /* Light blue on drag over */
+            background-color: #2d3748; /* Slightly lighter background */
+            box-shadow: 0 0 25px rgba(129, 140, 248, 0.6); /* Glow effect */
+        }
     </style>
 </head>
 <body class="bg-gray-900 min-h-screen flex flex-col items-center justify-start font-sans text-gray-200 p-4 md:p-8">
@@ -294,6 +306,12 @@
                 </button>
             </div>
              <div class="flex flex-wrap gap-4 justify-center pt-4 border-t border-gray-700">
+                <button id="extractFirstLastBtn" class="btn btn-primary btn-disabled" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span data-lang-key="extractFirstLast">一键提取首尾帧</span>
+                </button>
                 <button id="downloadAllFramesBtn" class="btn btn-secondary btn-disabled" disabled>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -363,6 +381,7 @@
         const clearFramesBtn = document.getElementById('clearFramesBtn');
         const downloadAllFramesBtn = document.getElementById('downloadAllFramesBtn');
         const downloadSelectedFramesBtn = document.getElementById('downloadSelectedFramesBtn');
+        const extractFirstLastBtn = document.getElementById('extractFirstLastBtn'); // New button element
         const extractedFramesContainer = document.getElementById('extractedFramesContainer');
         const hiddenCanvas = document.getElementById('hiddenCanvas');
         const ctx = hiddenCanvas.getContext('2d');
@@ -393,6 +412,7 @@
                 extractCurrentFrame: '提取当前帧',
                 intervalSeconds: '提取间隔 (秒):',
                 extractIntervalFrames: '按间隔提取',
+                extractFirstLast: '一键提取首尾帧', // New translation
                 clearFrames: '清空帧',
                 downloadAllFrames: '下载所有帧 (ZIP)',
                 downloadSelectedFrames: '下载选中帧 (ZIP)',
@@ -424,6 +444,7 @@
                 extractCurrentFrame: 'Extract Current Frame',
                 intervalSeconds: 'Extraction Interval (sec):',
                 extractIntervalFrames: 'Extract by Interval',
+                extractFirstLast: 'Extract First/Last Frame', // New translation
                 clearFrames: 'Clear Frames',
                 downloadAllFrames: 'Download All Frames (ZIP)',
                 downloadSelectedFrames: 'Download Selected Frames (ZIP)',
@@ -446,6 +467,40 @@
             }
         };
 
+        // Helper function to create a frame element and append it
+        function createFrameElement(imgDataUrl, filename, time) {
+            const frameWrapper = document.createElement('div');
+            frameWrapper.classList.add('frame-wrapper');
+            frameWrapper.setAttribute('data-selected', 'false');
+            frameWrapper.setAttribute('data-img-src', imgDataUrl); 
+            frameWrapper.setAttribute('data-filename', filename); 
+
+            const imgElement = document.createElement('img');
+            imgElement.src = imgDataUrl;
+            imgElement.alt = `Frame at ${time.toFixed(2)}s`;
+            imgElement.classList.add('w-full', 'h-auto', 'object-contain', 'rounded');
+
+            const timeOverlay = document.createElement('div');
+            timeOverlay.classList.add('time-overlay');
+            timeOverlay.textContent = `${time.toFixed(2)}s`;
+
+            const selectionIndicator = document.createElement('div');
+            selectionIndicator.classList.add('selection-indicator');
+            selectionIndicator.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+
+            frameWrapper.appendChild(imgElement);
+            frameWrapper.appendChild(timeOverlay);
+            frameWrapper.appendChild(selectionIndicator);
+
+            frameWrapper.addEventListener('click', () => {
+                const isSelected = frameWrapper.getAttribute('data-selected') === 'true';
+                frameWrapper.setAttribute('data-selected', !isSelected);
+                updateButtonStates(); 
+            });
+            return frameWrapper;
+        }
+
+        // Function to set the language
         function setLanguage(lang) {
             const elements = document.querySelectorAll('[data-lang-key]');
             elements.forEach(element => {
@@ -462,6 +517,7 @@
             localStorage.setItem('currentLang', lang);
         }
 
+        // Function to update button states (enabled/disabled)
         function updateButtonStates() {
             const hasVideo = !!videoPlayer.src && videoPlayer.readyState >= 2; // readyState 2 (HAVE_CURRENT_DATA) means video metadata is loaded
             const hasFrames = extractedFramesContainer.children.length > 0;
@@ -469,22 +525,26 @@
 
             extractCurrentFrameBtn.disabled = !hasVideo;
             extractIntervalFramesBtn.disabled = !hasVideo;
+            extractFirstLastBtn.disabled = !hasVideo; // New button state
             clearFramesBtn.disabled = !hasFrames;
             downloadAllFramesBtn.disabled = !hasFrames;
             downloadSelectedFramesBtn.disabled = !hasSelectedFrames;
 
-            [extractCurrentFrameBtn, extractIntervalFramesBtn, clearFramesBtn, downloadAllFramesBtn, downloadSelectedFramesBtn].forEach(button => {
+            [extractCurrentFrameBtn, extractIntervalFramesBtn, extractFirstLastBtn, clearFramesBtn, downloadAllFramesBtn, downloadSelectedFramesBtn].forEach(button => {
                 button.classList.toggle('btn-disabled', button.disabled);
             });
         }
 
+        // Initialize language on page load
         const savedLang = localStorage.getItem('currentLang') || 'zh';
         setLanguage(savedLang);
         updateButtonStates();
 
+        // Language toggle event listeners
         langZhBtn.addEventListener('click', () => setLanguage('zh'));
         langEnBtn.addEventListener('click', () => setLanguage('en'));
 
+        // Handle video file selection (both input and drag-drop will funnel here)
         function processVideoSource(source) {
             let videoSource = null;
             let videoFileName = translations[localStorage.getItem('currentLang') || 'zh']['noFileSelected'];
@@ -517,6 +577,7 @@
             processVideoSource(file);
         });
 
+        // Drag and Drop functionality
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -546,6 +607,11 @@
             updateButtonStates();
         });
 
+        /**
+         * Downloads frames as a ZIP file.
+         * @param {Array<HTMLElement>} frameElements - An array of frame wrapper elements.
+         * @param {string} zipFilename - The desired filename for the ZIP file.
+         */
         async function downloadFramesAsZip(frameElements, zipFilename) {
             if (frameElements.length === 0) {
                 alert(translations[localStorage.getItem('currentLang') || 'zh']['alertNoFrames']);
@@ -572,92 +638,43 @@
             }
         }
 
+        /**
+         * Extracts a frame from the video at a specific time or current time.
+         * Appends the extracted frame to the DOM.
+         * Returns a Promise that resolves with the created frameWrapper element.
+         * @param {number | undefined} time - The time in seconds to extract the frame. If undefined, extracts current frame.
+         * @returns {Promise<HTMLElement>} A promise that resolves with the created frameWrapper element.
+         */
         function extractFrame(time) {
-            if (!videoPlayer.src || videoPlayer.readyState < 2) { // HAVE_CURRENT_DATA
-                console.error(translations[localStorage.getItem('currentLang') || 'zh']['noVideoFile']);
-                return;
-            }
-            if (time !== undefined) {
-                videoPlayer.currentTime = time;
-            }
-            videoPlayer.addEventListener('seeked', function onSeeked() {
-                ctx.drawImage(videoPlayer, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
-                const imgDataUrl = hiddenCanvas.toDataURL('image/png');
-                frameCounter++;
-                const filename = `frame_at_${videoPlayer.currentTime.toFixed(2)}s_no_${frameCounter}.png`;
+            return new Promise((resolve, reject) => {
+                const currentLang = localStorage.getItem('currentLang') || 'zh';
+                if (!videoPlayer.src || videoPlayer.readyState < 2) { // Check if video is loaded and ready
+                    console.error(translations[currentLang]['noVideoFile']);
+                    reject(new Error(translations[currentLang]['noVideoFile']));
+                    return;
+                }
 
-                const frameWrapper = document.createElement('div');
-                frameWrapper.classList.add('frame-wrapper');
-                frameWrapper.setAttribute('data-selected', 'false');
-                frameWrapper.setAttribute('data-img-src', imgDataUrl); 
-                frameWrapper.setAttribute('data-filename', filename); 
-
-                const imgElement = document.createElement('img');
-                imgElement.src = imgDataUrl;
-                imgElement.alt = `Frame at ${videoPlayer.currentTime.toFixed(2)}s`;
-                imgElement.classList.add('w-full', 'h-auto', 'object-contain', 'rounded');
-
-                const timeOverlay = document.createElement('div');
-                timeOverlay.classList.add('time-overlay');
-                timeOverlay.textContent = `${videoPlayer.currentTime.toFixed(2)}s`;
-
-                const selectionIndicator = document.createElement('div');
-                selectionIndicator.classList.add('selection-indicator');
-                selectionIndicator.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
-
-                frameWrapper.appendChild(imgElement);
-                frameWrapper.appendChild(timeOverlay);
-                frameWrapper.appendChild(selectionIndicator);
-                extractedFramesContainer.appendChild(frameWrapper);
-
-                frameWrapper.addEventListener('click', () => {
-                    const isSelected = frameWrapper.getAttribute('data-selected') === 'true';
-                    frameWrapper.setAttribute('data-selected', !isSelected);
-                    updateButtonStates(); 
-                });
-                videoPlayer.removeEventListener('seeked', onSeeked);
-                updateButtonStates(); 
-            }, { once: true }); 
-
-            if (time === undefined) { // For "Extract Current Frame" when video might not need seeking
-                if (videoPlayer.readyState >= 2) { // HAVE_CURRENT_DATA
-                     ctx.drawImage(videoPlayer, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+                const performExtraction = () => {
+                    ctx.drawImage(videoPlayer, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
                     const imgDataUrl = hiddenCanvas.toDataURL('image/png');
                     frameCounter++;
                     const filename = `frame_at_${videoPlayer.currentTime.toFixed(2)}s_no_${frameCounter}.png`;
-
-                    const frameWrapper = document.createElement('div');
-                    frameWrapper.classList.add('frame-wrapper');
-                    frameWrapper.setAttribute('data-selected', 'false');
-                    frameWrapper.setAttribute('data-img-src', imgDataUrl); 
-                    frameWrapper.setAttribute('data-filename', filename);
-
-                    const imgElement = document.createElement('img');
-                    imgElement.src = imgDataUrl;
-                    imgElement.alt = `Frame at ${videoPlayer.currentTime.toFixed(2)}s`;
-                    imgElement.classList.add('w-full', 'h-auto', 'object-contain', 'rounded');
-
-                    const timeOverlay = document.createElement('div');
-                    timeOverlay.classList.add('time-overlay');
-                    timeOverlay.textContent = `${videoPlayer.currentTime.toFixed(2)}s`;
-
-                    const selectionIndicator = document.createElement('div');
-                    selectionIndicator.classList.add('selection-indicator');
-                    selectionIndicator.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
-
-                    frameWrapper.appendChild(imgElement);
-                    frameWrapper.appendChild(timeOverlay);
-                    frameWrapper.appendChild(selectionIndicator);
+                    const frameWrapper = createFrameElement(imgDataUrl, filename, videoPlayer.currentTime);
                     extractedFramesContainer.appendChild(frameWrapper);
+                    updateButtonStates();
+                    resolve(frameWrapper);
+                };
 
-                    frameWrapper.addEventListener('click', () => {
-                        const isSelected = frameWrapper.getAttribute('data-selected') === 'true';
-                        frameWrapper.setAttribute('data-selected', !isSelected);
-                        updateButtonStates(); 
-                    });
-                    updateButtonStates(); 
+                if (time !== undefined && videoPlayer.currentTime !== time) {
+                    videoPlayer.currentTime = time;
+                    videoPlayer.addEventListener('seeked', function onSeeked() {
+                        videoPlayer.removeEventListener('seeked', onSeeked);
+                        performExtraction();
+                    }, { once: true });
+                } else {
+                    performExtraction();
                 }
-            }
+            });
         }
 
         extractCurrentFrameBtn.addEventListener('click', () => {
@@ -689,9 +706,9 @@
             let currentTime = 0;
             videoPlayer.currentTime = 0;
 
-            const startExtraction = () => {
+            const startExtraction = async () => { // Made async to await extractFrame
                 if (currentTime <= videoDuration) {
-                    extractFrame(currentTime);
+                    await extractFrame(currentTime); // Await here
                     currentTime += interval;
                 } else {
                     clearInterval(intervalExtractionTimer);
@@ -704,6 +721,38 @@
             startExtraction();
             intervalExtractionTimer = setInterval(startExtraction, interval * 1000); 
         });
+
+        // New: Extract First and Last Frame Button Logic
+        extractFirstLastBtn.addEventListener('click', async () => {
+            const currentLang = localStorage.getItem('currentLang') || 'zh';
+            if (!videoPlayer.src || videoPlayer.readyState < 2) {
+                console.error(translations[currentLang]['noVideoFile']);
+                return;
+            }
+
+            loadingOverlay.classList.remove('hidden'); // Show loading overlay
+
+            try {
+                // Extract first frame
+                const firstFrameElement = await extractFrame(0);
+                // Extract last frame
+                const lastFrameElement = await extractFrame(videoDuration);
+
+                // Prepare frames for download
+                const framesToDownload = [firstFrameElement, lastFrameElement];
+
+                // Call download function
+                await downloadFramesAsZip(framesToDownload, '首尾帧.zip');
+
+            } catch (error) {
+                console.error('提取首尾帧并下载时发生错误:', error);
+                alert(translations[currentLang]['downloadError']);
+            } finally {
+                loadingOverlay.classList.add('hidden'); // Hide loading overlay
+                updateButtonStates(); // Update button states after operation
+            }
+        });
+
 
         clearFramesBtn.addEventListener('click', () => {
             confirmationModal.classList.remove('hidden');
