@@ -15,61 +15,59 @@
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #1a202c; /* Dark background for track */
-            border-radius: 10px;
+            background: #1f2937; /* gray-800 */
         }
         ::-webkit-scrollbar-thumb {
-            background: #4a5568; /* Darker thumb */
+            background: #4b5563; /* gray-600 */
             border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280; /* Lighter on hover */
+            background: #6b7280; /* gray-500 */
         }
 
-        /* Frame wrapper custom styles for selection state */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+
+        /* Frame wrapper custom styles */
         .frame-wrapper {
             position: relative;
             cursor: pointer;
-            border: 2px solid transparent; /* Default transparent border */
-            border-radius: 0.75rem; /* rounded-lg */
+            border: 2px solid #4b5563; /* gray-600 */
+            border-radius: 0.5rem; /* rounded-md */
             overflow: hidden;
-            transition: all 0.3s ease-in-out;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Deeper shadow for techy feel */
-            background-color: #2d3748; /* Darker background for frames */
+            transition: all 0.2s ease-in-out;
+            background-color: #374151; /* gray-700 */
         }
-
         .frame-wrapper:hover {
-            border-color: #6366f1; /* Tailwind indigo-500 on hover */
-            transform: translateY(-2px); /* Slight lift on hover */
+            border-color: #6366f1; /* indigo-500 */
+            transform: scale(1.03);
         }
-
         .frame-wrapper[data-selected="true"] {
-            border-color: #4f46e5; /* Tailwind indigo-600 */
-            border-width: 4px;
-            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4); /* Glow effect for selected */
-            transform: scale(1.02); /* Slightly larger when selected */
+            border-color: #4f46e5; /* indigo-600 */
+            border-width: 3px; /* Slightly thicker for selected */
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
         }
         .frame-wrapper[data-selected="true"] .selection-indicator {
             opacity: 1;
-            transform: scale(1) rotate(0deg);
+            transform: scale(1);
         }
 
         .selection-indicator {
             position: absolute;
-            top: 0.5rem; /* top-2 */
-            right: 0.5rem; /* right-2 */
-            width: 2rem; /* w-8 */
-            height: 2rem; /* h-8 */
-            background-color: #4f46e5; /* bg-indigo-600 */
-            border-radius: 9999px; /* rounded-full */
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 1.75rem; /* w-7 */
+            height: 1.75rem; /* h-7 */
+            background-color: #4f46e5; /* indigo-600 */
+            border-radius: 9999px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             opacity: 0;
-            transform: scale(0.5) rotate(-45deg); /* Initial state for animation */
-            transition: all 0.3s ease-in-out;
-            box-shadow: 0 0 15px rgba(79, 70, 229, 0.6); /* Subtle glow */
+            transform: scale(0);
+            transition: all 0.2s ease-in-out;
         }
 
         .time-overlay {
@@ -77,19 +75,14 @@
             bottom: 0;
             left: 0;
             right: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: rgba(0, 0, 0, 0.7); /* Darker for better contrast */
-            color: #a78bfa; /* Light purple text */
-            font-size: 0.875rem; /* text-sm */
-            padding: 0.5rem;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #c7d2fe; /* indigo-200 */
+            font-size: 0.75rem; /* text-xs */
+            padding: 0.25rem 0.5rem;
+            text-align: center;
             opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-            backdrop-filter: blur(3px); /* Subtle blur for techy feel */
-            -webkit-backdrop-filter: blur(3px);
+            transition: opacity 0.2s ease-in-out;
         }
-
         .frame-wrapper:hover .time-overlay {
             opacity: 1;
         }
@@ -101,57 +94,118 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(17, 24, 39, 0.8); /* gray-900 with opacity */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.25rem; /* text-xl */
             z-index: 1000;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            animation: fadeIn 0.5s ease-out forwards;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease-out forwards;
         }
 
         .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #818cf8; /* Light blue spinner */
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #818cf8; /* indigo-400 */
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1.5rem;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1rem;
         }
 
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
         
-        /* Button hover glow effect */
-        .button-glow:hover {
-            box-shadow: 0 0 20px rgba(79, 70, 229, 0.6);
+        /* Button base styles */
+        .btn {
+            padding: 0.75rem 1.5rem; /* py-3 px-6 */
+            border-radius: 0.5rem; /* rounded-lg */
+            font-weight: 600; /* semibold */
+            transition: all 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border: 1px solid transparent;
         }
-
-        .language-toggle .active {
-            background-color: #4f46e5; /* Indigo-600 */
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        .btn:active {
+            transform: translateY(0px);
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* indigo-600 */
             color: white;
         }
-
-        /* Disabled button styles */
+        .btn-primary:hover {
+            background-color: #4338ca; /* indigo-700 */
+        }
+        .btn-secondary {
+            background-color: #4b5563; /* gray-600 */
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #374151; /* gray-700 */
+        }
+        .btn-danger {
+            background-color: #dc2626; /* red-600 */
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #b91c1c; /* red-700 */
+        }
+        .btn-success {
+            background-color: #16a34a; /* green-600 */
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #15803d; /* green-700 */
+        }
+        .btn-teal {
+            background-color: #0d9488; /* teal-600 */
+            color: white;
+        }
+        .btn-teal:hover {
+            background-color: #0f766e; /* teal-700 */
+        }
         .btn-disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            pointer-events: none; /* Prevents click events */
-            box-shadow: none !important; /* Remove glow on disabled */
-            transform: none !important; /* Remove scale on disabled */
+            pointer-events: none;
+            transform: none !important;
         }
+        .btn svg {
+            margin-right: 0.5rem; /* mr-2 */
+        }
+
+        .language-toggle button {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px; /* rounded-full */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* medium */
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            color: #9ca3af; /* gray-400 */
+        }
+        .language-toggle button.active {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+        }
+        .language-toggle button:not(.active):hover {
+            background-color: #374151; /* gray-700 */
+            color: #e5e7eb; /* gray-200 */
+        }
+
 
         /* Custom Modal Styles */
         .modal-overlay {
@@ -160,143 +214,139 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(17, 24, 39, 0.8); /* gray-900 with opacity */
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1001; /* Higher than loading overlay */
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            z-index: 1001;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         }
 
         .modal-content {
-            background-color: #2d3748; /* Dark background */
+            background-color: #1f2937; /* gray-800 */
             padding: 2rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            border-radius: 0.75rem; /* rounded-lg */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
             text-align: center;
-            max-width: 400px;
+            max-width: 450px;
             width: 90%;
-            color: #e2e8f0; /* Light text */
-            border: 1px solid #4a5568;
-        }
-
-        /* Drag and Drop styles */
-        .drop-zone {
-            border: 2px dashed #6366f1; /* Indigo-500 dashed border */
-            background-color: #1a202c; /* Darker background for drop zone */
-            transition: all 0.3s ease-in-out;
-        }
-        .drop-zone.drag-over {
-            border-color: #818cf8; /* Light blue on drag over */
-            background-color: #2d3748; /* Slightly lighter background */
-            box-shadow: 0 0 25px rgba(129, 140, 248, 0.6); /* Glow effect */
+            color: #d1d5db; /* gray-300 */
+            border: 1px solid #374151; /* gray-700 */
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-900 to-black min-h-screen flex flex-col items-center justify-center font-sans text-gray-100 p-4">
-    <div class="bg-gray-800 p-8 rounded-3xl shadow-2xl w-full max-w-6xl space-y-10 border border-gray-700 backdrop-filter backdrop-blur-sm bg-opacity-70">
-        <div class="flex justify-end mb-4">
-            <div class="language-toggle flex bg-gray-700 rounded-full p-1 shadow-inner">
-                <button id="lang-zh" class="py-2 px-4 rounded-full text-sm font-semibold transition-colors duration-200" data-lang="zh">中文</button>
-                <button id="lang-en" class="py-2 px-4 rounded-full text-sm font-semibold transition-colors duration-200" data-lang="en">English</button>
-            </div>
-        </div>
-
-        <h1 class="text-5xl font-extrabold text-center text-indigo-400 mb-8 drop-shadow-lg tracking-wider">
+<body class="bg-gray-900 min-h-screen flex flex-col items-center justify-start font-sans text-gray-200 p-4 md:p-8">
+    
+    <header class="w-full max-w-6xl mx-auto mb-8 flex justify-between items-center py-4 px-2">
+        <h1 class="text-3xl md:text-4xl font-bold text-indigo-400">
             <span class="text-purple-400" data-lang-key="titlePart1">视频帧</span><span data-lang-key="titlePart2">提取器</span>
         </h1>
-
-        <div class="flex flex-col items-center space-y-5">
-            <label for="videoInput" class="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-10 rounded-full transition duration-300 ease-in-out transform hover:scale-105 shadow-xl button-glow flex items-center justify-center">
-                <input type="file" id="videoInput" accept="video/*" class="hidden">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 inline-block mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                <span data-lang-key="selectVideoFile">选择视频文件</span>
-            </label>
-            <span id="fileName" class="text-lg text-gray-400 font-medium tracking-wide" data-lang-key="noFileSelected">未选择文件</span>
+        <div class="language-toggle flex bg-gray-800 rounded-full p-1 shadow-md">
+            <button id="lang-zh" class="active" data-lang="zh">中文</button>
+            <button id="lang-en" data-lang="en">English</button>
         </div>
+    </header>
 
-        <div id="dropZone" class="relative w-full aspect-video bg-gray-900 rounded-2xl overflow-hidden shadow-inner border border-gray-700 flex items-center justify-center">
-            <video id="videoPlayer" controls class="w-full h-full object-contain"></video>
-            <div id="noVideoMessage" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 text-2xl bg-gray-900" style="display: flex;">
-                <span data-lang-key="pleaseSelectVideo">请选择或拖放视频文件以开始</span>
-                <span class="text-lg text-gray-600 mt-2" data-lang-key="dragDropHint">将视频文件拖拽到此区域</span>
+    <main class="bg-gray-800 p-6 md:p-10 rounded-xl shadow-2xl w-full max-w-6xl space-y-8 border border-gray-700">
+        
+        <section id="upload-section" class="space-y-6">
+            <div class="flex flex-col items-center space-y-4">
+                <label for="videoInput" class="btn btn-primary cursor-pointer shadow-lg hover:shadow-indigo-500/50">
+                    <input type="file" id="videoInput" accept="video/*" class="hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <span data-lang-key="selectVideoFile">选择视频文件</span>
+                </label>
+                <span id="fileName" class="text-sm text-gray-400" data-lang-key="noFileSelected">未选择文件</span>
             </div>
-        </div>
 
-        <div class="flex flex-col lg:flex-row items-center justify-center space-y-6 lg:space-y-0 lg:space-x-8 mt-8">
-            <button id="extractCurrentFrameBtn" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300 ease-in-out shadow-lg transform hover:scale-105 button-glow flex items-center btn-disabled" disabled>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span data-lang-key="extractCurrentFrame">提取当前帧</span>
-            </button>
+            <div id="dropZone" class="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-600 hover:border-indigo-500 transition-colors duration-200">
+                <video id="videoPlayer" controls class="w-full h-full object-contain hidden"></video>
+                <div id="noVideoMessage" class="text-center text-gray-500 p-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <p class="text-lg font-semibold" data-lang-key="pleaseSelectVideo">请选择或拖放视频文件</p>
+                    <p class="text-xs text-gray-600" data-lang-key="dragDropHint">将视频文件拖拽到此区域即可上传</p>
+                </div>
+            </div>
+        </section>
 
-            <div class="flex items-center space-x-4 bg-gray-700 p-4 rounded-xl shadow-inner border border-gray-600">
-                <label for="intervalInput" class="text-gray-300 font-medium text-lg" data-lang-key="intervalSeconds">间隔 (秒):</label>
-                <input type="number" id="intervalInput" value="1" min="0.1" step="0.1" class="w-32 p-3 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-center text-white text-lg">
-                <button id="extractIntervalFramesBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300 ease-in-out shadow-lg transform hover:scale-105 button-glow flex items-center btn-disabled" disabled>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 2v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <section id="controls-section" class="space-y-6 border-t border-gray-700 pt-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-end">
+                <div class="space-y-2">
+                    <label for="intervalInput" class="block text-sm font-medium text-gray-300" data-lang-key="intervalSeconds">提取间隔 (秒):</label>
+                    <input type="number" id="intervalInput" value="1" min="0.1" step="0.1" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white">
+                </div>
+                <button id="extractIntervalFramesBtn" class="btn bg-purple-600 hover:bg-purple-700 btn-disabled" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 2v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <span data-lang-key="extractIntervalFrames">按间隔提取帧</span>
                 </button>
+                 <button id="extractCurrentFrameBtn" class="btn btn-success btn-disabled" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span data-lang-key="extractCurrentFrame">提取当前帧</span>
+                </button>
             </div>
-
-            <button id="clearFramesBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300 ease-in-out shadow-lg transform hover:scale-105 button-glow flex items-center btn-disabled" disabled>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                <span data-lang-key="clearFrames">清空帧</span>
-            </button>
-        </div>
-
-        <div class="flex flex-col lg:flex-row items-center justify-center space-y-6 lg:space-y-0 lg:space-x-8 mt-8">
-            <button id="downloadAllFramesBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300 ease-in-out shadow-lg transform hover:scale-105 button-glow flex items-center btn-disabled" disabled>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <span data-lang-key="downloadAllFrames">下载所有帧 (ZIP)</span>
-            </button>
-            <button id="downloadSelectedFramesBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300 ease-in-out shadow-lg transform hover:scale-105 button-glow flex items-center btn-disabled" disabled>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13l3-3m0 0l3 3m-3-3v6m-9 1V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                </svg>
-                <span data-lang-key="downloadSelectedFrames">下载选中帧 (ZIP)</span>
-            </button>
-        </div>
-
-        <div id="extractedFramesContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 p-6 bg-gray-900 rounded-2xl shadow-inner max-h-96 overflow-y-auto border border-gray-700">
+             <div class="flex flex-wrap gap-4 justify-center pt-4 border-t border-gray-700">
+                <button id="downloadAllFramesBtn" class="btn btn-secondary btn-disabled" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span data-lang-key="downloadAllFrames">下载所有帧 (ZIP)</span>
+                </button>
+                <button id="downloadSelectedFramesBtn" class="btn btn-teal btn-disabled" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 13l3-3m0 0l3 3m-3-3v6m-9 1V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                    <span data-lang-key="downloadSelectedFrames">下载选中帧 (ZIP)</span>
+                </button>
+                <button id="clearFramesBtn" class="btn btn-danger btn-disabled" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span data-lang-key="clearFrames">清空帧</span>
+                </button>
             </div>
+        </section>
 
-        <div class="mt-10 pt-8 border-t border-gray-700 text-center space-y-6">
-            <h2 class="text-3xl font-bold text-indigo-400" data-lang-key="appreciationTitle">感谢您的支持！</h2>
-            <p class="text-gray-300 text-lg" data-lang-key="appreciationText">如果您觉得这个工具对您有帮助，请考虑赞赏支持开发者。</p>
+        <section id="frames-display-section" class="border-t border-gray-700 pt-8">
+            <h3 class="text-xl font-semibold text-gray-300 mb-4" data-lang-key="extractedFramesTitle">提取的帧</h3>
+            <div id="extractedFramesContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4 bg-gray-900 rounded-lg min-h-[150px] max-h-96 overflow-y-auto border border-gray-700">
+                </div>
+        </section>
+
+        <footer class="mt-10 pt-8 border-t border-gray-700 text-center space-y-4">
+            <h2 class="text-2xl font-semibold text-indigo-400" data-lang-key="appreciationTitle">感谢您的支持！</h2>
+            <p class="text-gray-400" data-lang-key="appreciationText">如果您觉得这个工具对您有帮助，请考虑赞赏支持开发者。</p>
             <div class="flex justify-center">
-                <img src="wechat.png" alt="赞赏二维码" class="w-48 h-48 rounded-lg shadow-xl border-2 border-gray-600 object-contain">
+                <img src="wechat.png" alt="赞赏二维码" class="w-40 h-40 rounded-lg shadow-lg border-2 border-gray-600 object-contain">
             </div>
-            </div>
+        </footer>
 
         <canvas id="hiddenCanvas" class="hidden"></canvas>
-    </div>
+    </main>
 
     <div id="loadingOverlay" class="loading-overlay hidden">
         <div class="spinner"></div>
-        <p class="text-2xl font-semibold tracking-wide" data-lang-key="loadingMessage">正在打包下载，请稍候...</p>
+        <p class="text-xl font-medium tracking-wide" data-lang-key="loadingMessage">正在打包下载，请稍候...</p>
     </div>
 
     <div id="confirmationModal" class="modal-overlay hidden">
         <div class="modal-content">
-            <h3 class="text-xl font-bold mb-4" data-lang-key="confirmTitle">确认操作</h3>
-            <p class="mb-6" data-lang-key="confirmMessage">您确定要清空所有已提取的帧吗？此操作不可撤销。</p>
-            <div class="flex justify-center space-x-4">
-                <button id="confirmClearBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-5 rounded-lg transition duration-300 ease-in-out shadow-md">
-                    <span data-lang-key="confirmYes">确定</span>
-                </button>
-                <button id="cancelClearBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-lg transition duration-300 ease-in-out shadow-md">
+            <h3 class="text-lg font-semibold mb-3" data-lang-key="confirmTitle">确认操作</h3>
+            <p class="mb-5 text-sm" data-lang-key="confirmMessage">您确定要清空所有已提取的帧吗？此操作不可撤销。</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelClearBtn" class="btn btn-secondary">
                     <span data-lang-key="confirmNo">取消</span>
+                </button>
+                <button id="confirmClearBtn" class="btn btn-danger">
+                    <span data-lang-key="confirmYes">确定</span>
                 </button>
             </div>
         </div>
@@ -321,42 +371,34 @@
         const langZhBtn = document.getElementById('lang-zh');
         const langEnBtn = document.getElementById('lang-en');
 
-        // Modal elements
         const confirmationModal = document.getElementById('confirmationModal');
         const confirmClearBtn = document.getElementById('confirmClearBtn');
         const cancelClearBtn = document.getElementById('cancelClearBtn');
-        const confirmTitle = document.getElementById('confirmationModal').querySelector('[data-lang-key="confirmTitle"]');
-        const confirmMessage = document.getElementById('confirmationModal').querySelector('[data-lang-key="confirmMessage"]');
-        const confirmYes = document.getElementById('confirmClearBtn').querySelector('[data-lang-key="confirmYes"]');
-        const confirmNo = document.getElementById('cancelClearBtn').querySelector('[data-lang-key="confirmNo"]');
-
-        // New: Drop Zone element
+        
         const dropZone = document.getElementById('dropZone');
 
-
         let videoDuration = 0;
-        let intervalExtractionTimer = null; // Used to store the timer ID
-        let frameCounter = 0; // Used for naming downloaded frames
+        let intervalExtractionTimer = null;
+        let frameCounter = 0;
 
-        // Translations object
         const translations = {
             zh: {
-                pageTitle: '视频帧提取器 - 科技工具',
+                pageTitle: '视频帧提取器 - 专业版',
                 titlePart1: '视频帧',
                 titlePart2: '提取器',
                 selectVideoFile: '选择视频文件',
                 noFileSelected: '未选择文件',
-                pleaseSelectVideo: '请选择或拖放视频文件以开始',
-                dragDropHint: '将视频文件拖拽到此区域',
+                pleaseSelectVideo: '请选择或拖放视频文件',
+                dragDropHint: '将视频文件拖拽到此区域即可上传',
                 extractCurrentFrame: '提取当前帧',
-                intervalSeconds: '间隔 (秒):',
-                extractIntervalFrames: '按间隔提取帧',
+                intervalSeconds: '提取间隔 (秒):',
+                extractIntervalFrames: '按间隔提取',
                 clearFrames: '清空帧',
                 downloadAllFrames: '下载所有帧 (ZIP)',
                 downloadSelectedFrames: '下载选中帧 (ZIP)',
+                extractedFramesTitle: '提取的帧',
                 appreciationTitle: '感谢您的支持！',
                 appreciationText: '如果您觉得这个工具对您有帮助，请考虑赞赏支持开发者。',
-                qrCodeNote: '（请替换为您的实际赞赏二维码）', // This key is still present but the HTML element is removed
                 loadingMessage: '正在打包下载，请稍候...',
                 alertNoFrames: '没有可下载的帧。',
                 alertSelectOneFrame: '请选择至少一帧进行下载。',
@@ -372,22 +414,22 @@
                 refreshConfirm: '刷新页面将丢失所有已提取的帧。您确定要继续吗？'
             },
             en: {
-                pageTitle: 'Video Frame Extractor - Tech Tool',
+                pageTitle: 'Video Frame Extractor - Pro',
                 titlePart1: 'Video Frame',
                 titlePart2: 'Extractor',
                 selectVideoFile: 'Select Video File',
                 noFileSelected: 'No file selected',
-                pleaseSelectVideo: 'Please select or drag & drop a video file to start',
-                dragDropHint: 'Drag and drop video files here',
+                pleaseSelectVideo: 'Please select or drag & drop a video file',
+                dragDropHint: 'Drag and drop video files here to upload',
                 extractCurrentFrame: 'Extract Current Frame',
-                intervalSeconds: 'Interval (seconds):',
-                extractIntervalFrames: 'Extract Frames by Interval',
+                intervalSeconds: 'Extraction Interval (sec):',
+                extractIntervalFrames: 'Extract by Interval',
                 clearFrames: 'Clear Frames',
                 downloadAllFrames: 'Download All Frames (ZIP)',
                 downloadSelectedFrames: 'Download Selected Frames (ZIP)',
+                extractedFramesTitle: 'Extracted Frames',
                 appreciationTitle: 'Thank You for Your Support!',
                 appreciationText: 'If you find this tool helpful, please consider supporting the developer with a donation.',
-                qrCodeNote: '(Please replace with your actual QR Code)', // This key is still present but the HTML element is removed
                 loadingMessage: 'Packaging for download, please wait...',
                 alertNoFrames: 'No frames available for download.',
                 alertSelectOneFrame: 'Please select at least one frame to download.',
@@ -404,208 +446,156 @@
             }
         };
 
-        // Function to set the language
         function setLanguage(lang) {
             const elements = document.querySelectorAll('[data-lang-key]');
             elements.forEach(element => {
                 const key = element.getAttribute('data-lang-key');
-                // Only update text content if the element is not the QR code note, as it's removed
-                if (key !== 'qrCodeNote' && translations[lang][key]) {
+                if (translations[lang][key]) {
                     element.textContent = translations[lang][key];
                 }
             });
-            // Update specific elements that need special handling
             document.title = translations[lang]['pageTitle'];
             fileNameSpan.textContent = videoInput.files[0] ? videoInput.files[0].name : translations[lang]['noFileSelected'];
             
-            // Update active button styling
-            langZhBtn.classList.remove('active');
-            langEnBtn.classList.remove('active');
-            if (lang === 'zh') {
-                langZhBtn.classList.add('active');
-            } else {
-                langEnBtn.classList.add('active');
-            }
-
-            localStorage.setItem('currentLang', lang); // Save language preference
+            langZhBtn.classList.toggle('active', lang === 'zh');
+            langEnBtn.classList.toggle('active', lang === 'en');
+            localStorage.setItem('currentLang', lang);
         }
 
-        // Function to update button states (enabled/disabled)
         function updateButtonStates() {
-            const hasVideo = !!videoPlayer.src;
+            const hasVideo = !!videoPlayer.src && videoPlayer.readyState >= 2; // readyState 2 (HAVE_CURRENT_DATA) means video metadata is loaded
             const hasFrames = extractedFramesContainer.children.length > 0;
             const hasSelectedFrames = extractedFramesContainer.querySelectorAll('.frame-wrapper[data-selected="true"]').length > 0;
 
-            // Enable/disable extraction buttons based on video presence
             extractCurrentFrameBtn.disabled = !hasVideo;
             extractIntervalFramesBtn.disabled = !hasVideo;
-
-            // Enable/disable frame management/download buttons based on frames presence
             clearFramesBtn.disabled = !hasFrames;
             downloadAllFramesBtn.disabled = !hasFrames;
-            
-            // Enable/disable selected frames download button based on selected frames presence
             downloadSelectedFramesBtn.disabled = !hasSelectedFrames;
 
-            // Apply/remove disabled class for visual feedback
             [extractCurrentFrameBtn, extractIntervalFramesBtn, clearFramesBtn, downloadAllFramesBtn, downloadSelectedFramesBtn].forEach(button => {
-                if (button.disabled) {
-                    button.classList.add('btn-disabled');
-                } else {
-                    button.classList.remove('btn-disabled');
-                }
+                button.classList.toggle('btn-disabled', button.disabled);
             });
         }
 
-        // Initialize language on page load
-        const savedLang = localStorage.getItem('currentLang') || 'zh'; // Default to Chinese
+        const savedLang = localStorage.getItem('currentLang') || 'zh';
         setLanguage(savedLang);
-        updateButtonStates(); // Set initial button states
+        updateButtonStates();
 
-        // Language toggle event listeners
         langZhBtn.addEventListener('click', () => setLanguage('zh'));
         langEnBtn.addEventListener('click', () => setLanguage('en'));
 
-        // Handle video file selection (both input and drag-drop will funnel here)
-        function handleVideoFile(file) {
-            if (file && file.type.startsWith('video/')) {
-                fileNameSpan.textContent = file.name;
-                const videoURL = URL.createObjectURL(file);
-                videoPlayer.src = videoURL;
-                noVideoMessage.style.display = 'none'; // Hide the message
-                videoPlayer.load(); // Load the video
-                // Clear extracted frames and reset counter
-                extractedFramesContainer.innerHTML = '';
-                frameCounter = 0;
+        function processVideoSource(source) {
+            let videoSource = null;
+            let videoFileName = translations[localStorage.getItem('currentLang') || 'zh']['noFileSelected'];
+
+            if (source && source.type && source.type.startsWith('video/')) {
+                videoSource = URL.createObjectURL(source);
+                videoFileName = source.name;
+                videoPlayer.classList.remove('hidden');
+                noVideoMessage.classList.add('hidden');
             } else {
-                fileNameSpan.textContent = translations[localStorage.getItem('currentLang') || 'zh']['noFileSelected'];
+                alert('请选择一个有效的视频文件。');
                 videoPlayer.src = '';
-                noVideoMessage.style.display = 'flex'; // Show the message
-                alert('请选择一个有效的视频文件。'); // Alert for invalid file type
+                videoPlayer.classList.add('hidden');
+                noVideoMessage.classList.remove('hidden');
+                fileNameSpan.textContent = translations[localStorage.getItem('currentLang') || 'zh']['noFileSelected'];
+                updateButtonStates();
+                return;
             }
-            updateButtonStates(); // Update button states after video selection
+            
+            fileNameSpan.textContent = videoFileName;
+            videoPlayer.src = videoSource;
+            videoPlayer.load(); 
+            extractedFramesContainer.innerHTML = '';
+            frameCounter = 0;
+            updateButtonStates();
         }
 
         videoInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
-            handleVideoFile(file);
+            processVideoSource(file);
         });
 
-        // Drag and Drop functionality
         dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault(); // Prevent default to allow drop
+            e.preventDefault();
             e.stopPropagation();
-            dropZone.classList.add('drag-over');
-            noVideoMessage.style.display = 'flex'; // Ensure message is visible during drag
+            dropZone.classList.add('border-indigo-500', 'bg-gray-700');
         });
 
         dropZone.addEventListener('dragleave', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            dropZone.classList.remove('drag-over');
-            // If no video is loaded, keep the message visible
-            if (!videoPlayer.src) {
-                noVideoMessage.style.display = 'flex';
-            } else {
-                noVideoMessage.style.display = 'none';
-            }
+            dropZone.classList.remove('border-indigo-500', 'bg-gray-700');
         });
 
         dropZone.addEventListener('drop', (e) => {
-            e.preventDefault(); // Prevent default file opening in browser
+            e.preventDefault();
             e.stopPropagation();
-            dropZone.classList.remove('drag-over');
-
+            dropZone.classList.remove('border-indigo-500', 'bg-gray-700');
             const files = e.dataTransfer.files;
             if (files.length > 0) {
-                handleVideoFile(files[0]); // Process the first dropped file
+                processVideoSource(files[0]);
             }
         });
 
-
-        // Get duration and set canvas dimensions after video metadata is loaded
         videoPlayer.addEventListener('loadedmetadata', () => {
             videoDuration = videoPlayer.duration;
             hiddenCanvas.width = videoPlayer.videoWidth;
             hiddenCanvas.height = videoPlayer.videoHeight;
-            updateButtonStates(); // Update button states once video metadata is loaded
+            updateButtonStates();
         });
 
-        /**
-         * Downloads frames as a ZIP file.
-         * @param {NodeListOf<Element>} frameElements - A NodeList of frame wrapper elements.
-         * @param {string} zipFilename - The desired filename for the ZIP file.
-         */
         async function downloadFramesAsZip(frameElements, zipFilename) {
             if (frameElements.length === 0) {
                 alert(translations[localStorage.getItem('currentLang') || 'zh']['alertNoFrames']);
                 return;
             }
-
-            loadingOverlay.classList.remove('hidden'); // Show loading overlay
+            loadingOverlay.classList.remove('hidden');
             const zip = new JSZip();
-
             try {
                 for (let i = 0; i < frameElements.length; i++) {
                     const frameWrapper = frameElements[i];
                     const imgDataUrl = frameWrapper.getAttribute('data-img-src');
                     const filename = frameWrapper.getAttribute('data-filename');
-
-                    // Fetch the image data and convert to Blob
                     const response = await fetch(imgDataUrl);
                     const blob = await response.blob();
-
-                    // Add to zip file
                     zip.file(filename, blob);
                 }
-
-                // Generate the ZIP file
                 const content = await zip.generateAsync({ type: "blob" });
-
-                // Save the ZIP file using FileSaver.js
                 saveAs(content, zipFilename);
-
             } catch (error) {
                 console.error('打包下载时发生错误:', error);
                 alert(translations[localStorage.getItem('currentLang') || 'zh']['downloadError']);
             } finally {
-                loadingOverlay.classList.add('hidden'); // Hide loading overlay
+                loadingOverlay.classList.add('hidden');
             }
         }
 
-        // Function to extract a frame
         function extractFrame(time) {
-            if (!videoPlayer.src) {
+            if (!videoPlayer.src || videoPlayer.readyState < 2) { // HAVE_CURRENT_DATA
                 console.error(translations[localStorage.getItem('currentLang') || 'zh']['noVideoFile']);
                 return;
             }
-
-            // If a specific time is provided, seek to that time
             if (time !== undefined) {
                 videoPlayer.currentTime = time;
             }
-
-            // Ensure the video is ready to draw the frame
             videoPlayer.addEventListener('seeked', function onSeeked() {
-                // Draw video frame to canvas
                 ctx.drawImage(videoPlayer, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
-
-                // Convert canvas content to image URL
                 const imgDataUrl = hiddenCanvas.toDataURL('image/png');
                 frameCounter++;
                 const filename = `frame_at_${videoPlayer.currentTime.toFixed(2)}s_no_${frameCounter}.png`;
 
-                // Create img element and its wrapper, then add to container
                 const frameWrapper = document.createElement('div');
                 frameWrapper.classList.add('frame-wrapper');
                 frameWrapper.setAttribute('data-selected', 'false');
-                frameWrapper.setAttribute('data-img-src', imgDataUrl); // Store image data URL for download
-                frameWrapper.setAttribute('data-filename', filename); // Store filename for download
+                frameWrapper.setAttribute('data-img-src', imgDataUrl); 
+                frameWrapper.setAttribute('data-filename', filename); 
 
                 const imgElement = document.createElement('img');
                 imgElement.src = imgDataUrl;
                 imgElement.alt = `Frame at ${videoPlayer.currentTime.toFixed(2)}s`;
-                imgElement.classList.add('w-full', 'h-auto', 'object-contain', 'rounded-md');
+                imgElement.classList.add('w-full', 'h-auto', 'object-contain', 'rounded');
 
                 const timeOverlay = document.createElement('div');
                 timeOverlay.classList.add('time-overlay');
@@ -620,95 +610,83 @@
                 frameWrapper.appendChild(selectionIndicator);
                 extractedFramesContainer.appendChild(frameWrapper);
 
-                // Add click event listener to select/deselect frame
                 frameWrapper.addEventListener('click', () => {
                     const isSelected = frameWrapper.getAttribute('data-selected') === 'true';
                     frameWrapper.setAttribute('data-selected', !isSelected);
-                    updateButtonStates(); // Update button states after selection change
+                    updateButtonStates(); 
                 });
-
-                // Remove event listener to prevent multiple triggers
                 videoPlayer.removeEventListener('seeked', onSeeked);
-                updateButtonStates(); // Update button states after a new frame is added
-            }, { once: true }); // Use { once: true } to ensure event triggers only once
+                updateButtonStates(); 
+            }, { once: true }); 
 
-            // If no specific time is provided, draw the current frame directly (after loadedmetadata)
-            if (time === undefined) {
-                // Draw video frame to canvas
-                ctx.drawImage(videoPlayer, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+            if (time === undefined) { // For "Extract Current Frame" when video might not need seeking
+                if (videoPlayer.readyState >= 2) { // HAVE_CURRENT_DATA
+                     ctx.drawImage(videoPlayer, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+                    const imgDataUrl = hiddenCanvas.toDataURL('image/png');
+                    frameCounter++;
+                    const filename = `frame_at_${videoPlayer.currentTime.toFixed(2)}s_no_${frameCounter}.png`;
 
-                // Convert canvas content to image URL
-                const imgDataUrl = hiddenCanvas.toDataURL('image/png');
-                frameCounter++;
-                const filename = `frame_at_${videoPlayer.currentTime.toFixed(2)}s_no_${frameCounter}.png`;
+                    const frameWrapper = document.createElement('div');
+                    frameWrapper.classList.add('frame-wrapper');
+                    frameWrapper.setAttribute('data-selected', 'false');
+                    frameWrapper.setAttribute('data-img-src', imgDataUrl); 
+                    frameWrapper.setAttribute('data-filename', filename);
 
-                // Create img element and its wrapper, then add to container
-                const frameWrapper = document.createElement('div');
-                frameWrapper.classList.add('frame-wrapper');
-                frameWrapper.setAttribute('data-selected', 'false');
-                frameWrapper.setAttribute('data-img-src', imgDataUrl); // Store image data URL for download
-                frameWrapper.setAttribute('data-filename', filename); // Store filename for download
+                    const imgElement = document.createElement('img');
+                    imgElement.src = imgDataUrl;
+                    imgElement.alt = `Frame at ${videoPlayer.currentTime.toFixed(2)}s`;
+                    imgElement.classList.add('w-full', 'h-auto', 'object-contain', 'rounded');
 
-                const imgElement = document.createElement('img');
-                imgElement.src = imgDataUrl;
-                imgElement.alt = `Frame at ${videoPlayer.currentTime.toFixed(2)}s`;
-                imgElement.classList.add('w-full', 'h-auto', 'object-contain', 'rounded-md');
+                    const timeOverlay = document.createElement('div');
+                    timeOverlay.classList.add('time-overlay');
+                    timeOverlay.textContent = `${videoPlayer.currentTime.toFixed(2)}s`;
 
-                const timeOverlay = document.createElement('div');
-                timeOverlay.classList.add('time-overlay');
-                timeOverlay.textContent = `${videoPlayer.currentTime.toFixed(2)}s`;
+                    const selectionIndicator = document.createElement('div');
+                    selectionIndicator.classList.add('selection-indicator');
+                    selectionIndicator.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
 
-                const selectionIndicator = document.createElement('div');
-                selectionIndicator.classList.add('selection-indicator');
-                selectionIndicator.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                    frameWrapper.appendChild(imgElement);
+                    frameWrapper.appendChild(timeOverlay);
+                    frameWrapper.appendChild(selectionIndicator);
+                    extractedFramesContainer.appendChild(frameWrapper);
 
-                frameWrapper.appendChild(imgElement);
-                frameWrapper.appendChild(timeOverlay);
-                frameWrapper.appendChild(selectionIndicator);
-                extractedFramesContainer.appendChild(frameWrapper);
-
-                // Add click event listener to select/deselect frame
-                frameWrapper.addEventListener('click', () => {
-                    const isSelected = frameWrapper.getAttribute('data-selected') === 'true';
-                    frameWrapper.setAttribute('data-selected', !isSelected);
-                    updateButtonStates(); // Update button states after selection change
-                });
-                updateButtonStates(); // Update button states after a new frame is added
+                    frameWrapper.addEventListener('click', () => {
+                        const isSelected = frameWrapper.getAttribute('data-selected') === 'true';
+                        frameWrapper.setAttribute('data-selected', !isSelected);
+                        updateButtonStates(); 
+                    });
+                    updateButtonStates(); 
+                }
             }
         }
 
-        // Bind extract current frame button event
         extractCurrentFrameBtn.addEventListener('click', () => {
-            extractFrame(); // Extract frame at current playback time
+            extractFrame(); 
         });
 
-        // Bind extract interval frames button event
         extractIntervalFramesBtn.addEventListener('click', () => {
-            if (!videoPlayer.src) {
-                console.error(translations[localStorage.getItem('currentLang') || 'zh']['noVideoFile']);
+            const currentLang = localStorage.getItem('currentLang') || 'zh';
+            if (!videoPlayer.src || videoPlayer.readyState < 2) {
+                console.error(translations[currentLang]['noVideoFile']);
                 return;
             }
 
-            // Clear previous timer to prevent duplicate starts
             if (intervalExtractionTimer) {
                 clearInterval(intervalExtractionTimer);
                 intervalExtractionTimer = null;
-                extractIntervalFramesBtn.textContent = translations[localStorage.getItem('currentLang') || 'zh']['extractIntervalFrames'];
-                console.log(translations[localStorage.getItem('currentLang') || 'zh']['extractionComplete']);
-                return; // If extracting, clicking the button stops it
+                document.getElementById('extractIntervalFramesBtn').querySelector('span').textContent = translations[currentLang]['extractIntervalFrames'];
+                console.log(translations[currentLang]['extractionComplete']);
+                return; 
             }
 
             const interval = parseFloat(intervalInput.value);
             if (isNaN(interval) || interval <= 0) {
-                alert(translations[localStorage.getItem('currentLang') || 'zh']['alertInvalidInterval']);
+                alert(translations[currentLang]['alertInvalidInterval']);
                 return;
             }
 
-            // Change button text to indicate active extraction
-            extractIntervalFramesBtn.textContent = translations[localStorage.getItem('currentLang') || 'zh']['stopExtraction'];
-
+            document.getElementById('extractIntervalFramesBtn').querySelector('span').textContent = translations[currentLang]['stopExtraction'];
             let currentTime = 0;
-            // Ensure extraction starts from the beginning of the video
             videoPlayer.currentTime = 0;
 
             const startExtraction = () => {
@@ -718,53 +696,46 @@
                 } else {
                     clearInterval(intervalExtractionTimer);
                     intervalExtractionTimer = null;
-                    extractIntervalFramesBtn.textContent = translations[localStorage.getItem('currentLang') || 'zh']['extractIntervalFrames'];
-                    console.log(translations[localStorage.getItem('currentLang') || 'zh']['extractionComplete']);
+                    document.getElementById('extractIntervalFramesBtn').querySelector('span').textContent = translations[currentLang]['extractIntervalFrames'];
+                    console.log(translations[currentLang]['extractionComplete']);
                 }
-                updateButtonStates(); // Update button states after extraction
+                updateButtonStates(); 
             };
-
-            // Execute first time immediately, then set timer
             startExtraction();
-            intervalExtractionTimer = setInterval(startExtraction, interval * 1000); // Convert to milliseconds
+            intervalExtractionTimer = setInterval(startExtraction, interval * 1000); 
         });
 
-        // Bind clear frames button event - show confirmation modal
         clearFramesBtn.addEventListener('click', () => {
             confirmationModal.classList.remove('hidden');
-            // Update modal text based on current language
             const currentLang = localStorage.getItem('currentLang') || 'zh';
-            confirmTitle.textContent = translations[currentLang]['confirmTitle'];
-            confirmMessage.textContent = translations[currentLang]['confirmMessage'];
-            confirmYes.textContent = translations[currentLang]['confirmYes'];
-            confirmNo.textContent = translations[currentLang]['confirmNo'];
+            confirmationModal.querySelector('[data-lang-key="confirmTitle"]').textContent = translations[currentLang]['confirmTitle'];
+            confirmationModal.querySelector('[data-lang-key="confirmMessage"]').textContent = translations[currentLang]['confirmMessage'];
+            confirmationModal.querySelector('[data-lang-key="confirmYes"]').textContent = translations[currentLang]['confirmYes'];
+            confirmationModal.querySelector('[data-lang-key="confirmNo"]').textContent = translations[currentLang]['confirmNo'];
         });
 
-        // Handle confirmation for clearing frames
         confirmClearBtn.addEventListener('click', () => {
-            extractedFramesContainer.innerHTML = ''; // Clear container content
-            frameCounter = 0; // Reset counter
-            // Stop any ongoing interval extraction
+            extractedFramesContainer.innerHTML = ''; 
+            frameCounter = 0; 
             if (intervalExtractionTimer) {
                 clearInterval(intervalExtractionTimer);
                 intervalExtractionTimer = null;
-                extractIntervalFramesBtn.textContent = translations[localStorage.getItem('currentLang') || 'zh']['extractIntervalFrames'];
+                 const currentLang = localStorage.getItem('currentLang') || 'zh';
+                document.getElementById('extractIntervalFramesBtn').querySelector('span').textContent = translations[currentLang]['extractIntervalFrames'];
             }
-            confirmationModal.classList.add('hidden'); // Hide modal
-            updateButtonStates(); // Update button states after clearing frames
+            confirmationModal.classList.add('hidden'); 
+            updateButtonStates(); 
         });
 
         cancelClearBtn.addEventListener('click', () => {
-            confirmationModal.classList.add('hidden'); // Hide modal
+            confirmationModal.classList.add('hidden'); 
         });
 
-        // Bind download all frames button event
         downloadAllFramesBtn.addEventListener('click', () => {
             const allFrames = extractedFramesContainer.querySelectorAll('.frame-wrapper');
             downloadFramesAsZip(allFrames, '所有抽帧.zip');
         });
 
-        // Bind download selected frames button event
         downloadSelectedFramesBtn.addEventListener('click', () => {
             const selectedFrames = extractedFramesContainer.querySelectorAll('.frame-wrapper[data-selected="true"]');
             if (selectedFrames.length === 0) {
@@ -774,9 +745,7 @@
             downloadFramesAsZip(selectedFrames, '选中抽帧.zip');
         });
 
-        // Add confirmation for page refresh/unload
         window.onbeforeunload = function() {
-            // Only show confirmation if there are extracted frames
             if (extractedFramesContainer.children.length > 0) {
                 return translations[localStorage.getItem('currentLang') || 'zh']['refreshConfirm'];
             }
