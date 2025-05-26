@@ -263,8 +263,7 @@
             <div class="flex justify-center">
                 <img src="wechat.png" alt="赞赏二维码" class="w-48 h-48 rounded-lg shadow-xl border-2 border-gray-600 object-contain">
             </div>
-            <p class="text-gray-400 text-sm" ></p>
-        </div>
+            </div>
 
         <canvas id="hiddenCanvas" class="hidden"></canvas>
     </div>
@@ -339,6 +338,7 @@
                 downloadSelectedFrames: '下载选中帧 (ZIP)',
                 appreciationTitle: '感谢您的支持！',
                 appreciationText: '如果您觉得这个工具对您有帮助，请考虑赞赏支持开发者。',
+                qrCodeNote: '（请替换为您的实际赞赏二维码）', // This key is still present but the HTML element is removed
                 loadingMessage: '正在打包下载，请稍候...',
                 alertNoFrames: '没有可下载的帧。',
                 alertSelectOneFrame: '请选择至少一帧进行下载。',
@@ -368,6 +368,7 @@
                 downloadSelectedFrames: 'Download Selected Frames (ZIP)',
                 appreciationTitle: 'Thank You for Your Support!',
                 appreciationText: 'If you find this tool helpful, please consider supporting the developer with a donation.',
+                qrCodeNote: '(Please replace with your actual QR Code)', // This key is still present but the HTML element is removed
                 loadingMessage: 'Packaging for download, please wait...',
                 alertNoFrames: 'No frames available for download.',
                 alertSelectOneFrame: 'Please select at least one frame to download.',
@@ -389,7 +390,8 @@
             const elements = document.querySelectorAll('[data-lang-key]');
             elements.forEach(element => {
                 const key = element.getAttribute('data-lang-key');
-                if (translations[lang][key]) {
+                // Only update text content if the element is not the QR code note, as it's removed
+                if (key !== 'qrCodeNote' && translations[lang][key]) {
                     element.textContent = translations[lang][key];
                 }
             });
