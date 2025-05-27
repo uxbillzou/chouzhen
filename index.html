@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -309,9 +309,11 @@
         <h1 class="text-3xl md:text-4xl font-bold text-indigo-400">
             <span class="text-purple-400" data-lang-key="titlePart1">视频帧</span><span data-lang-key="titlePart2">提取器</span>
         </h1>
-        <div class="language-toggle flex bg-gray-800 rounded-full p-1 shadow-md">
-            <button id="lang-zh" class="active" data-lang="zh">中文</button>
-            <button id="lang-en" data-lang="en">English</button>
+        <div class="flex items-center space-x-4">
+            <div class="language-toggle flex bg-gray-800 rounded-full p-1 shadow-md">
+                <button id="lang-zh" data-lang="zh">中文</button>
+                <button id="lang-en" class="active" data-lang="en">English</button>
+            </div>
         </div>
     </header>
 
@@ -408,6 +410,11 @@
                         </div>
                 </div>
             </div>
+            <div class="mt-6 flex justify-center">
+                <a href="https://www.producthunt.com/posts/video-frameextractor?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-video&#0045;frameextractor" target="_blank">
+                    <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=970502&theme=light&t=1748332340786" alt="Video&#0032;FrameExtractor - Quickly&#0032;disassemble&#0032;videos&#0032;into&#0032;frames&#0046; | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" />
+                </a>
+            </div>
         </footer>
 
         <canvas id="hiddenCanvas" class="hidden"></canvas>
@@ -428,6 +435,21 @@
                 </button>
                 <button id="confirmClearBtn" class="btn btn-danger">
                     <span data-lang-key="confirmYes">确定</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="feedbackModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4" data-lang-key="feedbackModalTitle">提交反馈</h3>
+            <textarea id="feedbackInput" class="w-full h-32 p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white text-base resize-none mb-4" data-lang-key="feedbackPlaceholder" placeholder="请在此输入您的建议或遇到的bug..."></textarea>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelFeedbackBtn" class="btn btn-secondary">
+                    <span data-lang-key="confirmNo">取消</span>
+                </button>
+                <button id="submitFeedbackBtn" class="btn btn-primary">
+                    <span data-lang-key="submitFeedback">提交</span>
                 </button>
             </div>
         </div>
@@ -461,9 +483,15 @@
         const dropZone = document.getElementById('dropZone');
         const selectVideoLabel = document.getElementById('selectVideoLabel'); // Get the label element
 
-
         const donorsScrollContainer = document.getElementById('donorsScrollContainer');
         const donorsScrollContent = document.getElementById('donorsScrollContent');
+
+        // Feedback Modal Elements
+        const feedbackButton = document.getElementById('feedbackButton');
+        const feedbackModal = document.getElementById('feedbackModal');
+        const feedbackInput = document.getElementById('feedbackInput');
+        const submitFeedbackBtn = document.getElementById('submitFeedbackBtn');
+        const cancelFeedbackBtn = document.getElementById('cancelFeedbackBtn');
 
 
         // Global Variables
@@ -504,9 +532,15 @@
                 confirmYes: '确定',
                 confirmNo: '取消',
                 refreshConfirm: '刷新页面将丢失所有已提取的帧。您确定要继续吗？',
-                confirmNewVideoTitle: '确认选择新视频', // New
-                confirmNewVideoMessage: '选择新视频将清空所有已提取的帧。您确定要继续吗？', // New
-                donorsListTitle: '打赏榜'
+                confirmNewVideoTitle: '确认选择新视频',
+                confirmNewVideoMessage: '选择新视频将清空所有已提取的帧。您确定要继续吗？',
+                donorsListTitle: '打赏榜',
+                feedbackButtonText: '提交反馈', // New
+                feedbackModalTitle: '提交反馈', // New
+                feedbackPlaceholder: '请在此输入您的建议或遇到的bug...', // New
+                feedbackEmailSubject: '视频帧提取器反馈', // New
+                feedbackEmailBodyPrefix: '用户反馈：\n\n', // New
+                feedbackSentAlert: '感谢您的反馈！您的邮件客户端将打开以发送邮件。' // New
             },
             en: {
                 pageTitle: 'Video Frame Extractor - Pro',
@@ -539,24 +573,25 @@
                 confirmYes: 'Confirm',
                 confirmNo: 'Cancel',
                 refreshConfirm: 'Refreshing the page will clear all extracted frames. Are you sure you want to proceed?',
-                confirmNewVideoTitle: 'Confirm New Video Selection', // New
-                confirmNewVideoMessage: 'Selecting a new video will clear all extracted frames. Are you sure you want to proceed?', // New
+                confirmNewVideoTitle: 'Confirm New Video Selection',
+                confirmNewVideoMessage: 'Selecting a new video will clear all extracted frames. Are you sure you want to proceed?',
                 donorsListTitle: 'Donation Leaderboard'
             }
         };
 
         // Mock Donation Data (AI-generated simulation)
         const mockDonationData = [
-            { name: "李明", amount: "¥10.00", time: "今天 01:05" },
-            { name: "王芳", amount: "¥5.00", time: "今天 07:12" },
-            { name: "刘伟", amount: "¥20.00", time: "今天 08:20" },
-            { name: "张丽", amount: "¥2.50", time: "今天 09:28" },
-            { name: "Light", amount: "¥15.00", time: "今天 09:35" },
-            { name: "杨敏", amount: "¥8.88", time: "今天 09:42" },
-            { name: "黄磊", "amount": "¥30.00", time: "今天 09:50" },
-            { name: "吴静", amount: "¥1.00", time: "今天 09:58" },
-            { name: "周涛", amount: "¥7.77", time: "今天 10:05" },
-            { name: "孙悦", amount: "¥12.34", time: "今天 10:12" }
+            { name: "李明", amount: "¥10.00", time: "今天 09:05" },
+            { name: "王芳", amount: "¥5.00", time: "今天 09:12" },
+            { name: "Light", amount: "¥3.00", time: "今天 09:45" }, // Added Light's donation
+            { name: "刘伟", amount: "¥20.00", time: "今天 10:00" },
+            { name: "张丽", amount: "¥2.50", time: "今天 10:28" },
+            { name: "陈强", amount: "¥15.00", time: "今天 10:35" },
+            { name: "杨敏", amount: "¥8.88", time: "今天 10:42" },
+            { name: "黄磊", "amount": "¥30.00", time: "今天 11:00" },
+            { name: "吴静", amount: "¥1.00", time: "今天 11:15" },
+            { name: "周涛", amount: "¥7.77", time: "今天 11:30" },
+            { name: "孙悦", amount: "¥12.34", time: "今天 11:45" }
         ];
 
         // Function to populate and start scrolling donors list
@@ -711,6 +746,20 @@
                 if (modalYesElement) modalYesElement.textContent = translations[currentLang]['confirmYes'];
                 if (modalNoElement) modalNoElement.textContent = translations[currentLang]['confirmNo'];
             }
+            // Update feedback modal text specifically
+            if (feedbackModal) {
+                const currentLang = localStorage.getItem('currentLang') || 'zh';
+                const feedbackModalTitleElement = feedbackModal.querySelector('[data-lang-key="feedbackModalTitle"]');
+                const feedbackPlaceholderElement = feedbackModal.querySelector('[data-lang-key="feedbackPlaceholder"]');
+                const submitFeedbackBtnSpan = feedbackModal.querySelector('#submitFeedbackBtn span'); 
+                const cancelFeedbackBtnSpan = feedbackModal.querySelector('#cancelFeedbackBtn span'); 
+
+                if (feedbackModalTitleElement) feedbackModalTitleElement.textContent = translations[currentLang]['feedbackModalTitle'];
+                if (feedbackPlaceholderElement) feedbackPlaceholderElement.setAttribute('placeholder', translations[currentLang]['feedbackPlaceholder']);
+                if (submitFeedbackBtnSpan) submitFeedbackBtnSpan.textContent = translations[currentLang]['submitFeedback'];
+                if (cancelFeedbackBtnSpan) cancelFeedbackBtnSpan.textContent = translations[currentLang]['confirmNo'];
+            }
+
             // Re-populate donors list to update language in donor items
             populateDonorsList();
         }
@@ -737,7 +786,7 @@
         }
 
         // Initial language setup and button states
-        const savedLang = localStorage.getItem('currentLang') || 'zh';
+        const savedLang = localStorage.getItem('currentLang') || 'en'; // Default to English
         setLanguage(savedLang);
         updateButtonStates();
         window.addEventListener('load', () => {
@@ -1066,7 +1115,7 @@
                 if (time !== undefined && videoPlayer.currentTime !== time) {
                     videoPlayer.currentTime = time;
                     videoPlayer.addEventListener('seeked', function onSeeked() {
-                        videoPlayer.removeEventListener('seeked', onSeeked);
+                        videoPlayer.removeEventListener('seeked', onSeeked); 
                         performExtraction();
                     }, { once: true });
                 } else {
@@ -1205,6 +1254,38 @@
                 return translations[localStorage.getItem('currentLang') || 'zh']['refreshConfirm'];
             }
         };
+
+        // Feedback Modal Logic
+        feedbackButton.addEventListener('click', () => {
+            feedbackModal.classList.remove('hidden');
+            const currentLang = localStorage.getItem('currentLang') || 'zh';
+            feedbackModal.querySelector('[data-lang-key="feedbackModalTitle"]').textContent = translations[currentLang]['feedbackModalTitle'];
+            feedbackInput.setAttribute('placeholder', translations[currentLang]['feedbackPlaceholder']);
+            feedbackModal.querySelector('#submitFeedbackBtn span').textContent = translations[currentLang]['submitFeedback'];
+            feedbackModal.querySelector('#cancelFeedbackBtn span').textContent = translations[currentLang]['confirmNo'];
+        });
+
+        cancelFeedbackBtn.addEventListener('click', () => {
+            feedbackModal.classList.add('hidden');
+            feedbackInput.value = ''; // Clear input on cancel
+        });
+
+        submitFeedbackBtn.addEventListener('click', () => {
+            const feedbackText = feedbackInput.value.trim();
+            const currentLang = localStorage.getItem('currentLang') || 'zh';
+            if (feedbackText) {
+                const subject = encodeURIComponent(translations[currentLang]['feedbackEmailSubject']);
+                const body = encodeURIComponent(translations[currentLang]['feedbackEmailBodyPrefix'] + feedbackText);
+                const mailtoLink = `mailto:uxbillzou@gmail.com?subject=${subject}&body=${body}`;
+                
+                window.open(mailtoLink, '_blank'); // Open email client
+                alert(translations[currentLang]['feedbackSentAlert']); // Inform user
+                feedbackModal.classList.add('hidden');
+                feedbackInput.value = ''; // Clear input after submission
+            } else {
+                alert(translations[currentLang]['feedbackPlaceholder']); // Prompt if empty
+            }
+        });
     </script>
 </body>
 </html>
