@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-lang-key="pageTitle">视频帧提取器 - 科技工具</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -27,6 +28,29 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #0d0d1a; /* Very dark blue-gray base for particles background */
+            overflow-x: hidden; /* Prevent horizontal scrollbar */
+            position: relative; /* Needed for z-index context */
+        }
+
+        /* particles.js container styles */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1; /* Ensure it's behind content */
+            background-color: #0d0d1a; /* Match body background for seamless transition */
+        }
+
+        /* Main content container for semi-transparency */
+        main {
+            position: relative; /* Ensure main content is above particles */
+            z-index: 1;
+            background-color: rgba(31, 41, 55, 0.7); /* gray-800 with transparency */
+            backdrop-filter: blur(4px); /* Optional: blur effect for content behind */
+            -webkit-backdrop-filter: blur(4px);
         }
 
         /* Frame wrapper custom styles */
@@ -279,6 +303,8 @@
 </head>
 <body class="bg-gray-900 min-h-screen flex flex-col items-center justify-start font-sans text-gray-200 p-4 md:p-8">
     
+    <div id="particles-js"></div>
+
     <header class="w-full max-w-6xl mx-auto mb-8 flex justify-between items-center py-4 px-2">
         <h1 class="text-3xl md:text-4xl font-bold text-indigo-400">
             <span class="text-purple-400" data-lang-key="titlePart1">视频帧</span><span data-lang-key="titlePart2">提取器</span>
@@ -293,7 +319,7 @@
         
         <section id="upload-section" class="space-y-6">
             <div class="flex flex-col items-center space-y-4">
-                <label for="videoInput" class="btn btn-primary cursor-pointer shadow-lg hover:shadow-indigo-500/50">
+                <label for="videoInput" id="selectVideoLabel" class="btn btn-primary cursor-pointer shadow-lg hover:shadow-indigo-500/50">
                     <input type="file" id="videoInput" accept="video/*" class="hidden">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -433,6 +459,8 @@
         const cancelClearBtn = document.getElementById('cancelClearBtn');
         
         const dropZone = document.getElementById('dropZone');
+        const selectVideoLabel = document.getElementById('selectVideoLabel'); // Get the label element
+
 
         const donorsScrollContainer = document.getElementById('donorsScrollContainer');
         const donorsScrollContent = document.getElementById('donorsScrollContent');
@@ -459,7 +487,7 @@
                 extractFirstLast: '一键提取首尾帧',
                 clearFrames: '清空帧',
                 downloadAllFrames: '下载所有帧 (ZIP)',
-                downloadSelectedFrames: '下载选中帧', // Removed (ZIP)
+                downloadSelectedFrames: '下载选中帧',
                 extractedFramesTitle: '提取的帧',
                 appreciationTitle: '感谢您的支持！',
                 appreciationText: '如果您觉得这个工具对您有帮助，请考虑赞赏支持开发者。',
@@ -476,6 +504,8 @@
                 confirmYes: '确定',
                 confirmNo: '取消',
                 refreshConfirm: '刷新页面将丢失所有已提取的帧。您确定要继续吗？',
+                confirmNewVideoTitle: '确认选择新视频', // New
+                confirmNewVideoMessage: '选择新视频将清空所有已提取的帧。您确定要继续吗？', // New
                 donorsListTitle: '打赏榜'
             },
             en: {
@@ -492,7 +522,7 @@
                 extractFirstLast: 'Extract First/Last Frame',
                 clearFrames: 'Clear Frames',
                 downloadAllFrames: 'Download All Frames (ZIP)',
-                downloadSelectedFrames: 'Download Selected Frames', // Removed (ZIP)
+                downloadSelectedFrames: 'Download Selected Frames',
                 extractedFramesTitle: 'Extracted Frames',
                 appreciationTitle: 'Thank You for Your Support!',
                 appreciationText: 'If you find this tool helpful, please consider supporting the developer with a donation.',
@@ -509,17 +539,19 @@
                 confirmYes: 'Confirm',
                 confirmNo: 'Cancel',
                 refreshConfirm: 'Refreshing the page will clear all extracted frames. Are you sure you want to proceed?',
+                confirmNewVideoTitle: 'Confirm New Video Selection', // New
+                confirmNewVideoMessage: 'Selecting a new video will clear all extracted frames. Are you sure you want to proceed?', // New
                 donorsListTitle: 'Donation Leaderboard'
             }
         };
 
         // Mock Donation Data (AI-generated simulation)
         const mockDonationData = [
-            { name: "Light", amount: "¥3.00", time: "今天 09:30" },
-            { name: "王芳", amount: "¥5.00", time: "今天 01:12" },
+            { name: "李明", amount: "¥10.00", time: "今天 01:05" },
+            { name: "王芳", amount: "¥5.00", time: "今天 07:12" },
             { name: "刘伟", amount: "¥20.00", time: "今天 08:20" },
-            { name: "张丽", amount: "¥2.50", time: "今天 08:28" },
-            { name: "陈强", amount: "¥15.00", time: "今天 09:35" },
+            { name: "张丽", amount: "¥2.50", time: "今天 09:28" },
+            { name: "Light", amount: "¥15.00", time: "今天 09:35" },
             { name: "杨敏", amount: "¥8.88", time: "今天 09:42" },
             { name: "黄磊", "amount": "¥30.00", time: "今天 09:50" },
             { name: "吴静", amount: "¥1.00", time: "今天 09:58" },
@@ -704,18 +736,118 @@
             });
         }
 
-        // Removed Firebase Initialization and Auth related functions
-        /*
-        async function initializeFirebaseAndAuth() { ... }
-        async function handleAppStats() { ... }
-        */
-
         // Initial language setup and button states
         const savedLang = localStorage.getItem('currentLang') || 'zh';
         setLanguage(savedLang);
         updateButtonStates();
         window.addEventListener('load', () => {
             populateDonorsList();
+            // Initialize particles.js after the window loads
+            particlesJS('particles-js', {
+                "particles": {
+                    "number": {
+                        "value": 80,
+                        "density": {
+                            "enable": true,
+                            "value_area": 800
+                        }
+                    },
+                    "color": {
+                        "value": "#ffffff"
+                    },
+                    "shape": {
+                        "type": "circle",
+                        "stroke": {
+                            "width": 0,
+                            "color": "#000000"
+                        },
+                        "polygon": {
+                            "nb_sides": 5
+                        }
+                    },
+                    "opacity": {
+                        "value": 0.5,
+                        "random": false,
+                        "anim": {
+                            "enable": false,
+                            "speed": 1,
+                            "opacity_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "size": {
+                        "value": 3,
+                        "random": true,
+                        "anim": {
+                            "enable": false,
+                            "speed": 40,
+                            "size_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "line_linked": {
+                        "enable": true,
+                        "distance": 150,
+                        "color": "#ffffff",
+                        "opacity": 0.4,
+                        "width": 1
+                    },
+                    "move": {
+                        "enable": true,
+                        "speed": 6,
+                        "direction": "none",
+                        "random": false,
+                        "straight": false,
+                        "out_mode": "out",
+                        "bounce": false,
+                        "attract": {
+                            "enable": false,
+                            "rotateX": 600,
+                            "rotateY": 1200
+                        }
+                    }
+                },
+                "interactivity": {
+                    "detect_on": "canvas",
+                    "events": {
+                        "onhover": {
+                            "enable": true,
+                            "mode": "grab" // Use grab for hover
+                        },
+                        "onclick": {
+                            "enable": true,
+                            "mode": "repulse" // Use repulse for click
+                        },
+                        "resize": true
+                    },
+                    "modes": {
+                        "grab": {
+                            "distance": 300, // Increased distance for a wider grab effect
+                            "line_linked": {
+                                "opacity": 0.8 // Make lines more visible
+                            }
+                        },
+                        "bubble": { // Keep bubble config, but it won't be the primary hover mode now
+                            "distance": 400,
+                            "size": 10, // Make bubbles larger
+                            "duration": 1.5,
+                            "opacity": 0.8,
+                            "speed": 3
+                        },
+                        "repulse": {
+                            "distance": 200, // Increased distance for stronger repulsion
+                            "duration": 0.8 // Duration of repulse animation
+                        },
+                        "push": {
+                            "particles_nb": 15 // Push more particles
+                        },
+                        "remove": {
+                            "particles_nb": 2
+                        }
+                    }
+                },
+                "retina_detect": true
+            });
         });
 
         // Language toggle event listeners
@@ -750,9 +882,47 @@
             updateButtonStates();
         }
 
+        // Modified: videoInput change event for confirmation
         videoInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
-            processVideoSource(file);
+            const currentLang = localStorage.getItem('currentLang') || 'zh';
+
+            if (!file) { // User canceled the file dialog
+                console.log("File selection cancelled.");
+                updateButtonStates(); 
+                return;
+            }
+
+            // Check if a video is already loaded AND frames have been extracted
+            if (videoPlayer.src && extractedFramesContainer.children.length > 0) {
+                // Show confirmation modal
+                confirmationModal.classList.remove('hidden');
+                confirmationModal.querySelector('[data-lang-key="confirmTitle"]').textContent = translations[currentLang]['confirmNewVideoTitle'];
+                confirmationModal.querySelector('[data-lang-key="confirmMessage"]').textContent = translations[currentLang]['confirmNewVideoMessage'];
+                
+                // Use temporary event listeners for modal buttons to avoid multiple bindings
+                const handleConfirm = () => {
+                    confirmationModal.classList.add('hidden');
+                    confirmClearBtn.removeEventListener('click', handleConfirm);
+                    cancelClearBtn.removeEventListener('click', handleCancel);
+                    processVideoSource(file); // Process the new file
+                };
+                const handleCancel = () => {
+                    confirmationModal.classList.add('hidden');
+                    confirmClearBtn.removeEventListener('click', handleConfirm);
+                    cancelClearBtn.removeEventListener('click', handleCancel);
+                    // Clear the file input value so it doesn't re-trigger with the same file
+                    videoInput.value = ''; // Reset file input
+                    updateButtonStates(); 
+                };
+
+                confirmClearBtn.addEventListener('click', handleConfirm, { once: true }); 
+                cancelClearBtn.addEventListener('click', handleCancel, { once: true }); 
+
+            } else {
+                // If no video or no frames, proceed directly to process the new file
+                processVideoSource(file);
+            }
         });
 
         // Drag and Drop functionality
@@ -774,7 +944,36 @@
             dropZone.classList.remove('border-indigo-500', 'bg-gray-700');
             const files = e.dataTransfer.files;
             if (files.length > 0) {
-                processVideoSource(files[0]);
+                const file = files[0];
+                const currentLang = localStorage.getItem('currentLang') || 'zh';
+
+                // Check if a video is already loaded and frames extracted, show confirmation
+                if (videoPlayer.src && extractedFramesContainer.children.length > 0) {
+                    confirmationModal.classList.remove('hidden');
+                    confirmationModal.querySelector('[data-lang-key="confirmTitle"]').textContent = translations[currentLang]['confirmNewVideoTitle'];
+                    confirmationModal.querySelector('[data-lang-key="confirmMessage"]').textContent = translations[currentLang]['confirmNewVideoMessage'];
+                    
+                    const handleConfirmDrop = () => {
+                        confirmationModal.classList.add('hidden');
+                        confirmClearBtn.removeEventListener('click', handleConfirmDrop);
+                        cancelClearBtn.removeEventListener('click', handleCancelDrop);
+                        processVideoSource(file); // Process the dropped file
+                    };
+                    const handleCancelDrop = () => {
+                        confirmationModal.classList.add('hidden');
+                        confirmClearBtn.removeEventListener('click', handleConfirmDrop);
+                        cancelClearBtn.removeEventListener('click', handleCancelDrop);
+                        // Do not process the dropped file
+                        updateButtonStates(); 
+                    };
+
+                    confirmClearBtn.addEventListener('click', handleConfirmDrop, { once: true });
+                    cancelClearBtn.addEventListener('click', handleCancelDrop, { once: true });
+
+                } else {
+                    // Otherwise, process directly
+                    processVideoSource(file);
+                }
             }
         });
 
