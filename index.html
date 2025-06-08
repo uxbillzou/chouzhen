@@ -6,16 +6,30 @@
     <title data-lang-key="pageTitle">视频帧提取器 - 科技工具</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 
+    <!-- SEO Meta Tags - 帮助 Google 更好地理解您的网站内容 -->
+    <!-- 请务必将所有 'YOUR_...' 占位符替换为您的实际信息 -->
     <meta name="description" content="在线视频帧提取工具，轻松从视频中提取高清图片，支持拖拽上传、自定义间隔、一键首尾帧提取，并可单张或批量下载。">
     <meta name="keywords" content="视频帧提取, 视频截图, 视频剪辑, 在线工具, 免费工具, 图像提取, 视频转图片, 帧抓取, video frame extractor, video screenshot, online tool, free tool, image extraction, video to image, frame grabber">
     <meta name="author" content="uxbillzou">
-    <meta name="robots" content="index, follow"> <link rel="canonical" href="YOUR_WEBSITE_CANONICAL_URL"> <meta property="og:type" content="website">
-    <meta property="og:url" content="YOUR_WEBSITE_URL"> <meta property="og:title" content="视频帧提取器 - 轻松提取视频精彩瞬间">
+    <meta name="robots" content="index, follow"> <!-- 指示搜索引擎索引此页面并追踪链接 -->
+    <link rel="canonical" href="YOUR_WEBSITE_CANONICAL_URL"> <!-- 替换为您的网站规范URL，确保唯一性 -->
+
+    <!-- Open Graph / Facebook / LinkedIn / WhatsApp - 用于社交媒体分享时的预览效果 -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="YOUR_WEBSITE_URL"> <!-- 替换为您的网站URL -->
+    <meta property="og:title" content="视频帧提取器 - 轻松提取视频精彩瞬间">
     <meta property="og:description" content="在线视频帧提取工具，轻松从视频中提取高清图片，支持拖拽上传、自定义间隔、一键首尾帧提取，并可单张或批量下载。">
-    <meta property="og:image" content="YOUR_OG_IMAGE_URL"> <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="YOUR_WEBSITE_URL"> <meta property="twitter:title" content="视频帧提取器 - 轻松提取视频精彩瞬间">
+    <meta property="og:image" content="YOUR_OG_IMAGE_URL"> <!-- 替换为社交媒体分享时显示的图片URL（例如，网站截图或Logo） -->
+
+    <!-- Twitter Card - 用于 Twitter 分享时的预览效果 -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="YOUR_WEBSITE_URL"> <!-- 替换为您的网站URL -->
+    <meta property="twitter:title" content="视频帧提取器 - 轻松提取视频精彩瞬间">
     <meta property="twitter:description" content="在线视频帧提取工具，轻松从视频中提取高清图片，支持拖拽上传、自定义间隔、一键首尾帧提取，并可单张或批量下载。">
-    <meta property="twitter:image" content="YOUR_TWITTER_IMAGE_URL"> <script type="application/ld+json">
+    <meta property="twitter:image" content="YOUR_TWITTER_IMAGE_URL"> <!-- 替换为Twitter分享时显示的图片URL -->
+
+    <!-- Schema.org Structured Data (JSON-LD) for WebSite and SoftwareApplication - 帮助搜索引擎理解网站类型和功能 -->
+    <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@graph": [
@@ -324,7 +338,7 @@
         .drop-zone.drag-over {
             border-color: #818cf8; /* Light blue on drag over */
             background-color: #2d3748; /* Slightly lighter background */
-            box-shadow: 0 0 25px rgba(129, 140, 248, 0.6); /* Glow effect */
+            box-shadow: 0 0 25px rgba(129, 140, 248, 0.6); /* Glow Effect */
         }
 
         /* Donation Scroll Animation */
@@ -444,6 +458,15 @@
                     <span data-lang-key="clearFrames">清空帧</span>
                 </button>
             </div>
+            <!-- Auto Delete Duplicate Frames Button -->
+            <div class="flex justify-center pt-4 border-t border-gray-700">
+                <button id="autoDeleteDuplicatesBtn" class="btn bg-orange-500 hover:bg-orange-600 btn-disabled" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16M7 7h.01M17 7h.01" />
+                    </svg>
+                    <span data-lang-key="autoDeleteDuplicates">自动删除重复帧</span>
+                </button>
+            </div>
         </section>
 
         <section id="frames-display-section" class="border-t border-gray-700 pt-8">
@@ -483,29 +506,14 @@
 
     <div id="confirmationModal" class="modal-overlay hidden">
         <div class="modal-content">
-            <h3 class="text-lg font-semibold mb-3" data-lang-key="confirmTitle">确认操作</h3>
-            <p class="mb-5 text-sm" data-lang-key="confirmMessage">您确定要清空所有已提取的帧吗？此操作不可撤销。</p>
+            <h3 class="text-lg font-semibold mb-3" id="modalTitle">确认操作</h3>
+            <p class="mb-5 text-sm" id="modalMessage"></p>
             <div class="flex justify-end space-x-3">
-                <button id="cancelClearBtn" class="btn btn-secondary">
+                <button id="cancelModalBtn" class="btn btn-secondary">
                     <span data-lang-key="confirmNo">取消</span>
                 </button>
-                <button id="confirmClearBtn" class="btn btn-danger">
+                <button id="confirmModalBtn" class="btn btn-danger">
                     <span data-lang-key="confirmYes">确定</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="feedbackModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold mb-4" data-lang-key="feedbackModalTitle">提交反馈</h3>
-            <textarea id="feedbackInput" class="w-full h-32 p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white text-base resize-none mb-4" data-lang-key="feedbackPlaceholder" placeholder="请在此输入您的建议或遇到的bug..."></textarea>
-            <div class="flex justify-end space-x-3">
-                <button id="cancelFeedbackBtn" class="btn btn-secondary">
-                    <span data-lang-key="confirmNo">取消</span>
-                </button>
-                <button id="submitFeedbackBtn" class="btn btn-primary">
-                    <span data-lang-key="submitFeedback">提交</span>
                 </button>
             </div>
         </div>
@@ -524,6 +532,7 @@
         const downloadAllFramesBtn = document.getElementById('downloadAllFramesBtn');
         const downloadSelectedFramesBtn = document.getElementById('downloadSelectedFramesBtn');
         const extractFirstLastBtn = document.getElementById('extractFirstLastBtn');
+        const autoDeleteDuplicatesBtn = document.getElementById('autoDeleteDuplicatesBtn'); // Reference new button
         const extractedFramesContainer = document.getElementById('extractedFramesContainer');
         const hiddenCanvas = document.getElementById('hiddenCanvas');
         const ctx = hiddenCanvas.getContext('2d');
@@ -533,21 +542,17 @@
         const langEnBtn = document.getElementById('lang-en');
 
         const confirmationModal = document.getElementById('confirmationModal');
-        const confirmClearBtn = document.getElementById('confirmClearBtn');
-        const cancelClearBtn = document.getElementById('cancelClearBtn');
-        
+        const confirmModalBtn = document.getElementById('confirmModalBtn'); // Changed to generic
+        const cancelModalBtn = document.getElementById('cancelModalBtn'); // Changed to generic
+        const modalTitleElement = document.getElementById('modalTitle'); // Get modal title element
+        const modalMessageElement = document.getElementById('modalMessage'); // Get modal message element
+
         const dropZone = document.getElementById('dropZone');
         const selectVideoLabel = document.getElementById('selectVideoLabel'); // Get the label element
 
+
         const donorsScrollContainer = document.getElementById('donorsScrollContainer');
         const donorsScrollContent = document.getElementById('donorsScrollContent');
-
-        // Feedback Modal Elements
-        const feedbackButton = document.getElementById('feedbackButton');
-        const feedbackModal = document.getElementById('feedbackModal');
-        const feedbackInput = document.getElementById('feedbackInput');
-        const submitFeedbackBtn = document.getElementById('submitFeedbackBtn');
-        const cancelFeedbackBtn = document.getElementById('cancelFeedbackBtn');
 
 
         // Global Variables
@@ -583,20 +588,18 @@
                 extractionComplete: '按间隔提取帧完成。',
                 downloadError: '打包下载失败，请稍后再试。',
                 noVideoFile: '未加载视频文件。',
-                confirmTitle: '确认操作',
-                confirmMessage: '您确定要清空所有已提取的帧吗？此操作不可撤销。',
+                confirmTitle: '确认操作', // Generic Confirmation Title
+                confirmMessage: '您确定要清空所有已提取的帧吗？此操作不可撤销。', // Generic Confirmation Message
                 confirmYes: '确定',
                 confirmNo: '取消',
                 refreshConfirm: '刷新页面将丢失所有已提取的帧。您确定要继续吗？',
                 confirmNewVideoTitle: '确认选择新视频',
                 confirmNewVideoMessage: '选择新视频将清空所有已提取的帧。您确定要继续吗？',
                 donorsListTitle: '打赏榜',
-                feedbackButtonText: '提交反馈', // New
-                feedbackModalTitle: '提交反馈', // New
-                feedbackPlaceholder: '请在此输入您的建议或遇到的bug...', // New
-                feedbackEmailSubject: '视频帧提取器反馈', // New
-                feedbackEmailBodyPrefix: '用户反馈：\n\n', // New
-                feedbackSentAlert: '感谢您的反馈！您的邮件客户端将打开以发送邮件。' // New
+                autoDeleteDuplicates: '自动删除重复帧', // New translation
+                confirmDeleteDuplicatesTitle: '确认删除重复帧', // New
+                confirmDeleteDuplicatesMessage: '您确定要删除 {count} 个自动识别的重复帧吗？此操作不可撤销。', // New
+                noDuplicatesFound: '未识别到重复帧。', // New
             },
             en: {
                 pageTitle: 'Video Frame Extractor - Pro',
@@ -624,30 +627,34 @@
                 extractionComplete: 'Interval frame extraction complete.',
                 downloadError: 'Packaging for download failed, please try again later.',
                 noVideoFile: 'No video file loaded.',
-                confirmTitle: 'Confirm Action',
-                confirmMessage: 'Are you sure you want to clear all extracted frames? This action cannot be undone.',
+                confirmTitle: 'Confirm Action', // Generic Confirmation Title
+                confirmMessage: 'Are you sure you want to clear all extracted frames? This action cannot be undone.', // Generic Confirmation Message
                 confirmYes: 'Confirm',
                 confirmNo: 'Cancel',
                 refreshConfirm: 'Refreshing the page will clear all extracted frames. Are you sure you want to proceed?',
                 confirmNewVideoTitle: 'Confirm New Video Selection',
                 confirmNewVideoMessage: 'Selecting a new video will clear all extracted frames. Are you sure you want to proceed?',
-                donorsListTitle: 'Donation Leaderboard'
+                donorsListTitle: 'Donation Leaderboard',
+                autoDeleteDuplicates: 'Auto Delete Duplicate Frames', // New translation
+                confirmDeleteDuplicatesTitle: 'Confirm Duplicate Deletion', // New
+                confirmDeleteDuplicatesMessage: 'Are you sure you want to delete {count} auto-detected duplicate frames? This action cannot be undone.', // New
+                noDuplicatesFound: 'No duplicate frames found.', // New
             }
         };
 
         // Mock Donation Data (AI-generated simulation)
         const mockDonationData = [
-            { name: "橙心", amount: "¥9.99", time: "今天 09:49" },
+            { name: "李明", amount: "¥10.00", time: "今天 09:05" },
             { name: "王芳", amount: "¥5.00", time: "今天 09:12" },
             { name: "Light", amount: "¥3.00", time: "今天 09:45" }, // Added Light's donation
-            { name: "刘伟", amount: "¥20.00", time: "昨天 10:00" },
-            { name: "张丽", amount: "¥2.50", time: "昨天 10:28" },
-            { name: "陈强", amount: "¥15.00", time: "昨天 10:35" },
-            { name: "杨敏", amount: "¥8.88", time: "昨天 10:42" },
-            { name: "黄磊", "amount": "¥30.00", time: "昨天 11:00" },
-            { name: "吴静", amount: "¥1.00", time: "昨天 11:15" },
-            { name: "周涛", amount: "¥7.77", time: "昨天 11:30" },
-            { name: "孙悦", amount: "¥12.34", time: "昨天 11:45" }
+            { name: "刘伟", amount: "¥20.00", time: "今天 10:00" },
+            { name: "张丽", amount: "¥2.50", time: "今天 10:28" },
+            { name: "陈强", amount: "¥15.00", time: "今天 10:35" },
+            { name: "杨敏", amount: "¥8.88", time: "今天 10:42" },
+            { name: "黄磊", "amount": "¥30.00", time: "今天 11:00" },
+            { name: "吴静", amount: "¥1.00", time: "今天 11:15" },
+            { name: "周涛", amount: "¥7.77", time: "今天 11:30" },
+            { name: "孙悦", amount: "¥12.34", time: "今天 11:45" }
         ];
 
         // Function to populate and start scrolling donors list
@@ -656,6 +663,8 @@
         let donorItemHeight = 0; // Will be calculated dynamically
 
         function populateDonorsList() {
+            if (!donorsScrollContent || !donorsScrollContainer) return; // Add null checks
+
             donorsScrollContent.innerHTML = ''; // Clear existing content
 
             const createDonorItem = (donor) => {
@@ -765,6 +774,35 @@
             return frameWrapper;
         }
 
+        /**
+         * Generic function to show a confirmation modal.
+         * @param {string} titleKey - Key for the title in translations.
+         * @param {string} messageKey - Key for the message in translations.
+         * @param {function} onConfirmCallback - Function to call if user confirms.
+         */
+        function showConfirmationModal(titleKey, messageKey, onConfirmCallback) {
+            const currentLang = localStorage.getItem('currentLang') || 'en';
+            if (modalTitleElement) modalTitleElement.textContent = translations[currentLang][titleKey];
+            if (modalMessageElement) modalMessageElement.textContent = translations[currentLang][messageKey];
+            
+            confirmationModal.classList.remove('hidden');
+
+            const handleConfirm = () => {
+                confirmationModal.classList.add('hidden');
+                confirmModalBtn.removeEventListener('click', handleConfirm);
+                cancelModalBtn.removeEventListener('click', handleCancel);
+                onConfirmCallback();
+            };
+            const handleCancel = () => {
+                confirmationModal.classList.add('hidden');
+                confirmModalBtn.removeEventListener('click', handleConfirm);
+                cancelModalBtn.removeEventListener('click', handleCancel);
+            };
+
+            confirmModalBtn.addEventListener('click', handleConfirm, { once: true });
+            cancelModalBtn.addEventListener('click', handleCancel, { once: true });
+        }
+
         // Function to set the language
         function setLanguage(lang) {
             const elements = document.querySelectorAll('[data-lang-key]');
@@ -779,42 +817,17 @@
                 }
             });
             document.title = translations[lang]['pageTitle'];
-            if (videoInput.files && videoInput.files[0]) { // Check if file is selected
-                fileNameSpan.textContent = videoInput.files[0].name;
-            } else {
-                fileNameSpan.textContent = translations[lang]['noFileSelected'];
+            if (fileNameSpan) { // Null check for fileNameSpan
+                if (videoInput.files && videoInput.files[0]) { // Check if file is selected
+                    fileNameSpan.textContent = videoInput.files[0].name;
+                } else {
+                    fileNameSpan.textContent = translations[lang]['noFileSelected'];
+                }
             }
             
             langZhBtn.classList.toggle('active', lang === 'zh');
             langEnBtn.classList.toggle('active', lang === 'en');
             localStorage.setItem('currentLang', lang);
-
-            // Update modal text specifically
-            if (confirmationModal) {
-                const currentLang = localStorage.getItem('currentLang') || 'zh';
-                const modalTitleElement = confirmationModal.querySelector('[data-lang-key="confirmTitle"]');
-                const modalMessageElement = confirmationModal.querySelector('[data-lang-key="confirmMessage"]');
-                const modalYesElement = confirmationModal.querySelector('[data-lang-key="confirmYes"]');
-                const modalNoElement = confirmationModal.querySelector('[data-lang-key="confirmNo"]');
-
-                if (modalTitleElement) modalTitleElement.textContent = translations[currentLang]['confirmTitle'];
-                if (modalMessageElement) modalMessageElement.textContent = translations[currentLang]['confirmMessage'];
-                if (modalYesElement) modalYesElement.textContent = translations[currentLang]['confirmYes'];
-                if (modalNoElement) modalNoElement.textContent = translations[currentLang]['confirmNo'];
-            }
-            // Update feedback modal text specifically
-            if (feedbackModal) {
-                const currentLang = localStorage.getItem('currentLang') || 'zh';
-                const feedbackModalTitleElement = feedbackModal.querySelector('[data-lang-key="feedbackModalTitle"]');
-                const feedbackPlaceholderElement = feedbackModal.querySelector('[data-lang-key="feedbackPlaceholder"]');
-                const submitFeedbackBtnSpan = feedbackModal.querySelector('#submitFeedbackBtn span'); 
-                const cancelFeedbackBtnSpan = feedbackModal.querySelector('#cancelFeedbackBtn span'); 
-
-                if (feedbackModalTitleElement) feedbackModalTitleElement.textContent = translations[currentLang]['feedbackModalTitle'];
-                if (feedbackPlaceholderElement) feedbackPlaceholderElement.setAttribute('placeholder', translations[currentLang]['feedbackPlaceholder']);
-                if (submitFeedbackBtnSpan) submitFeedbackBtnSpan.textContent = translations[currentLang]['submitFeedback'];
-                if (cancelFeedbackBtnSpan) cancelFeedbackBtnSpan.textContent = translations[currentLang]['confirmNo'];
-            }
 
             // Re-populate donors list to update language in donor items
             populateDonorsList();
@@ -833,8 +846,9 @@
             if (clearFramesBtn) clearFramesBtn.disabled = !hasFrames;
             if (downloadAllFramesBtn) downloadAllFramesBtn.disabled = !hasFrames;
             if (downloadSelectedFramesBtn) downloadSelectedFramesBtn.disabled = !hasSelectedFrames;
+            if (autoDeleteDuplicatesBtn) autoDeleteDuplicatesBtn.disabled = !hasFrames; // Only enable if there are frames
 
-            [extractCurrentFrameBtn, extractIntervalFramesBtn, extractFirstLastBtn, clearFramesBtn, downloadAllFramesBtn, downloadSelectedFramesBtn].forEach(button => {
+            [extractCurrentFrameBtn, extractIntervalFramesBtn, extractFirstLastBtn, clearFramesBtn, downloadAllFramesBtn, downloadSelectedFramesBtn, autoDeleteDuplicatesBtn].forEach(button => {
                 if (button) { 
                     button.classList.toggle('btn-disabled', button.disabled);
                 }
@@ -962,7 +976,7 @@
         // Handle video file selection (both input and drag-drop will funnel here)
         function processVideoSource(source) {
             let videoSource = null;
-            let videoFileName = translations[localStorage.getItem('currentLang') || 'zh']['noFileSelected'];
+            let videoFileName = translations[localStorage.getItem('currentLang') || 'en']['noFileSelected']; // Default to English
 
             if (source && source.type && source.type.startsWith('video/')) {
                 videoSource = URL.createObjectURL(source);
@@ -974,7 +988,7 @@
                 videoPlayer.src = '';
                 videoPlayer.classList.add('hidden');
                 noVideoMessage.classList.remove('hidden');
-                fileNameSpan.textContent = translations[localStorage.getItem('currentLang') || 'zh']['noFileSelected'];
+                fileNameSpan.textContent = translations[localStorage.getItem('currentLang') || 'en']['noFileSelected']; // Default to English
                 updateButtonStates();
                 return;
             }
@@ -987,47 +1001,41 @@
             updateButtonStates();
         }
 
-        // Modified: videoInput change event for confirmation
+        // Modified: selectVideoLabel click event for confirmation
+        selectVideoLabel.addEventListener('click', (event) => {
+            const fileInput = document.getElementById('videoInput');
+            const currentLang = localStorage.getItem('currentLang') || 'en'; // Default to English
+
+            // Check if a video is already loaded AND frames have been extracted
+            if (videoPlayer.src && extractedFramesContainer.children.length > 0) {
+                event.preventDefault(); // Prevent default file input click from the label initially
+                showConfirmationModal(
+                    'confirmNewVideoTitle',
+                    'confirmNewVideoMessage',
+                    () => {
+                        // User confirmed, now programmatically click the file input
+                        fileInput.click(); 
+                    }
+                );
+            } else {
+                // If no video or no frames, allow default label behavior (which will trigger input click)
+            }
+        });
+
+        // Modified: videoInput change event (simplified as label handles initial click)
         videoInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
-            const currentLang = localStorage.getItem('currentLang') || 'zh';
+            const currentLang = localStorage.getItem('currentLang') || 'en'; // Default to English
 
             if (!file) { // User canceled the file dialog
                 console.log("File selection cancelled.");
                 updateButtonStates(); 
                 return;
             }
-
-            // Check if a video is already loaded AND frames have been extracted
-            if (videoPlayer.src && extractedFramesContainer.children.length > 0) {
-                // Show confirmation modal
-                confirmationModal.classList.remove('hidden');
-                confirmationModal.querySelector('[data-lang-key="confirmTitle"]').textContent = translations[currentLang]['confirmNewVideoTitle'];
-                confirmationModal.querySelector('[data-lang-key="confirmMessage"]').textContent = translations[currentLang]['confirmNewVideoMessage'];
-                
-                // Use temporary event listeners for modal buttons to avoid multiple bindings
-                const handleConfirm = () => {
-                    confirmationModal.classList.add('hidden');
-                    confirmClearBtn.removeEventListener('click', handleConfirm);
-                    cancelClearBtn.removeEventListener('click', handleCancel);
-                    processVideoSource(file); // Process the new file
-                };
-                const handleCancel = () => {
-                    confirmationModal.classList.add('hidden');
-                    confirmClearBtn.removeEventListener('click', handleConfirm);
-                    cancelClearBtn.removeEventListener('click', handleCancel);
-                    // Clear the file input value so it doesn't re-trigger with the same file
-                    videoInput.value = ''; // Reset file input
-                    updateButtonStates(); 
-                };
-
-                confirmClearBtn.addEventListener('click', handleConfirm, { once: true }); 
-                cancelClearBtn.addEventListener('click', handleCancel, { once: true }); 
-
-            } else {
-                // If no video or no frames, proceed directly to process the new file
-                processVideoSource(file);
-            }
+            
+            // Process the new file directly. The confirmation logic is now
+            // handled by the selectVideoLabel click listener *before* this change event is triggered.
+            processVideoSource(file);
         });
 
         // Drag and Drop functionality
@@ -1050,31 +1058,18 @@
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 const file = files[0];
-                const currentLang = localStorage.getItem('currentLang') || 'zh';
+                const currentLang = localStorage.getItem('currentLang') || 'en'; // Default to English
 
                 // Check if a video is already loaded and frames extracted, show confirmation
                 if (videoPlayer.src && extractedFramesContainer.children.length > 0) {
-                    confirmationModal.classList.remove('hidden');
-                    confirmationModal.querySelector('[data-lang-key="confirmTitle"]').textContent = translations[currentLang]['confirmNewVideoTitle'];
-                    confirmationModal.querySelector('[data-lang-key="confirmMessage"]').textContent = translations[currentLang]['confirmNewVideoMessage'];
-                    
-                    const handleConfirmDrop = () => {
-                        confirmationModal.classList.add('hidden');
-                        confirmClearBtn.removeEventListener('click', handleConfirmDrop);
-                        cancelClearBtn.removeEventListener('click', handleCancelDrop);
-                        processVideoSource(file); // Process the dropped file
-                    };
-                    const handleCancelDrop = () => {
-                        confirmationModal.classList.add('hidden');
-                        confirmClearBtn.removeEventListener('click', handleConfirmDrop);
-                        cancelClearBtn.removeEventListener('click', handleCancelDrop);
-                        // Do not process the dropped file
-                        updateButtonStates(); 
-                    };
-
-                    confirmClearBtn.addEventListener('click', handleConfirmDrop, { once: true });
-                    cancelClearBtn.addEventListener('click', handleCancelDrop, { once: true });
-
+                    showConfirmationModal(
+                        'confirmNewVideoTitle',
+                        'confirmNewVideoMessage',
+                        () => {
+                            // User confirmed, process the dropped file
+                            processVideoSource(file); 
+                        }
+                    );
                 } else {
                     // Otherwise, process directly
                     processVideoSource(file);
@@ -1096,7 +1091,7 @@
          */
         async function downloadFramesAsZip(frameElements, zipFilename) {
             if (frameElements.length === 0) {
-                alert(translations[localStorage.getItem('currentLang') || 'zh']['alertNoFrames']);
+                alert(translations[localStorage.getItem('currentLang') || 'en']['alertNoFrames']); // Default to English
                 return;
             }
             loadingOverlay.classList.remove('hidden');
@@ -1114,7 +1109,7 @@
                 saveAs(content, zipFilename);
             } catch (error) {
                 console.error('打包下载时发生错误:', error);
-                alert(translations[localStorage.getItem('currentLang') || 'zh']['downloadError']);
+                alert(translations[localStorage.getItem('currentLang') || 'en']['downloadError']); // Default to English
             } finally {
                 loadingOverlay.classList.add('hidden');
             }
@@ -1150,7 +1145,7 @@
          */
         function extractFrame(time) {
             return new Promise((resolve, reject) => {
-                const currentLang = localStorage.getItem('currentLang') || 'zh';
+                const currentLang = localStorage.getItem('currentLang') || 'en'; // Default to English
                 if (!videoPlayer.src || videoPlayer.readyState < 2) { 
                     console.error(translations[currentLang]['noVideoFile']);
                     reject(new Error(translations[currentLang]['noVideoFile']));
@@ -1185,7 +1180,7 @@
         });
 
         extractIntervalFramesBtn.addEventListener('click', () => {
-            const currentLang = localStorage.getItem('currentLang') || 'zh';
+            const currentLang = localStorage.getItem('currentLang') || 'en'; // Default to English
             if (!videoPlayer.src || videoPlayer.readyState < 2) {
                 console.error(translations[currentLang]['noVideoFile']);
                 return;
@@ -1226,7 +1221,7 @@
         });
 
         extractFirstLastBtn.addEventListener('click', async () => {
-            const currentLang = localStorage.getItem('currentLang') || 'zh';
+            const currentLang = localStorage.getItem('currentLang') || 'en'; // Default to English
             if (!videoPlayer.src || videoPlayer.readyState < 2) {
                 console.error(translations[currentLang]['noVideoFile']);
                 return;
@@ -1251,36 +1246,115 @@
             }
         });
 
+        // Auto Delete Duplicates Button Logic - Event Listener
+        autoDeleteDuplicatesBtn.addEventListener('click', async () => {
+            const currentLang = localStorage.getItem('currentLang') || 'en'; // Default to English
+            if (!videoPlayer.src || extractedFramesContainer.children.length === 0) {
+                alert(translations[currentLang]['noVideoFile']);
+                return;
+            }
+
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.querySelector('p').textContent = translations[currentLang]['autoDetectLoading']; // Reusing autoDetectLoading for duplicates
+
+            const allFrames = Array.from(extractedFramesContainer.children);
+            const framesToCompare = [];
+            const duplicateFrames = new Set(); // Use a Set to store unique duplicate elements
+
+            // Prepare frames for comparison: Draw to a temporary canvas and get pixel data
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+
+            for (const frameWrapper of allFrames) {
+                const img = new Image();
+                img.src = frameWrapper.getAttribute('data-img-src');
+                await new Promise(resolve => img.onload = resolve);
+                
+                // Resize image to a smaller size for faster comparison
+                const compareWidth = 100; // Small width for comparison
+                const compareHeight = Math.round(img.height * (compareWidth / img.width));
+
+                tempCanvas.width = compareWidth;
+                tempCanvas.height = compareHeight;
+                tempCtx.drawImage(img, 0, 0, compareWidth, compareHeight);
+                const pixelData = tempCtx.getImageData(0, 0, compareWidth, compareHeight).data;
+                framesToCompare.push({ element: frameWrapper, pixelData: pixelData });
+            }
+
+            const pixelDiffThreshold = (tempCanvas.width * tempCanvas.height * 3) * 5; // Adjust threshold based on testing (e.g., 5% of max possible diff)
+
+            for (let i = 0; i < framesToCompare.length; i++) {
+                for (let j = i + 1; j < framesToCompare.length; j++) {
+                    const diff = getPixelDiff(framesToCompare[i].pixelData, framesToCompare[j].pixelData, 4); // Sample every pixel (step 4 for RGBA)
+                    if (diff < pixelDiffThreshold) {
+                        // If j is a duplicate of i, mark j for deletion
+                        duplicateFrames.add(framesToCompare[j].element);
+                    }
+                }
+            }
+
+            loadingOverlay.classList.add('hidden'); // Hide loading overlay
+            loadingOverlay.querySelector('p').textContent = translations[currentLang]['loadingMessage']; // Reset loading text
+
+
+            if (duplicateFrames.size > 0) {
+                // Select the duplicate frames visually
+                duplicateFrames.forEach(frame => {
+                    frame.setAttribute('data-selected', 'true');
+                });
+                updateButtonStates(); // Update button states to reflect selected duplicates
+
+                // Show confirmation modal for deleting duplicates
+                showConfirmationModal(
+                    'confirmDeleteDuplicatesTitle',
+                    translations[currentLang]['confirmDeleteDuplicatesMessage'].replace('{count}', duplicateFrames.size),
+                    () => {
+                        // User confirmed deletion
+                        duplicateFrames.forEach(frame => {
+                            frame.remove(); // Remove from DOM
+                        });
+                        updateButtonStates(); // Update button states after deletion
+                    }
+                );
+            } else {
+                alert(translations[currentLang]['noDuplicatesFound']);
+            }
+        });
+
+        /**
+         * Function to calculate pixel difference between two ImageData arrays.
+         * @param {Uint8ClampedArray} data1 - Pixel data from image 1.
+         * @param {Uint8ClampedArray} data2 - Pixel data from image 2.
+         * @param {number} sampleStep - How many pixels to skip (e.g., 4 for every pixel in RGBA).
+         * @returns {number} The sum of absolute differences.
+         */
+        function getPixelDiff(data1, data2, sampleStep) {
+            let diff = 0;
+            // Iterate only over RGB channels, skip A (alpha)
+            for (let i = 0; i < data1.length; i += sampleStep) {
+                diff += Math.abs(data1[i] - data2[i]);   // Red
+                diff += Math.abs(data1[i+1] - data2[i+1]); // Green
+                diff += Math.abs(data1[i+2] - data2[i+2]); // Blue
+            }
+            return diff;
+        }
+
 
         clearFramesBtn.addEventListener('click', () => {
-            confirmationModal.classList.remove('hidden');
-            const currentLang = localStorage.getItem('currentLang') || 'zh';
-            const modalTitleElement = confirmationModal.querySelector('[data-lang-key="confirmTitle"]');
-            const modalMessageElement = confirmationModal.querySelector('[data-lang-key="confirmMessage"]');
-            const modalYesElement = confirmationModal.querySelector('[data-lang-key="confirmYes"]');
-            const modalNoElement = confirmationModal.querySelector('[data-lang-key="confirmNo"]');
-
-            if (modalTitleElement) modalTitleElement.textContent = translations[currentLang]['confirmTitle'];
-            if (modalMessageElement) modalMessageElement.textContent = translations[currentLang]['confirmMessage'];
-            if (modalYesElement) modalYesElement.textContent = translations[currentLang]['confirmYes'];
-            if (modalNoElement) modalNoElement.textContent = translations[currentLang]['confirmNo'];
-        });
-
-        confirmClearBtn.addEventListener('click', () => {
-            extractedFramesContainer.innerHTML = ''; 
-            frameCounter = 0; 
-            if (intervalExtractionTimer) {
-                clearInterval(intervalExtractionTimer);
-                intervalExtractionTimer = null;
-                 const currentLang = localStorage.getItem('currentLang') || 'zh';
-                document.getElementById('extractIntervalFramesBtn').querySelector('span').textContent = translations[currentLang]['extractIntervalFrames'];
-            }
-            confirmationModal.classList.add('hidden'); 
-            updateButtonStates(); 
-        });
-
-        cancelClearBtn.addEventListener('click', () => {
-            confirmationModal.classList.add('hidden'); 
+            showConfirmationModal(
+                'confirmTitle',
+                'confirmMessage',
+                () => {
+                    extractedFramesContainer.innerHTML = ''; 
+                    frameCounter = 0; 
+                    if (intervalExtractionTimer) {
+                        clearInterval(intervalExtractionTimer);
+                        intervalExtractionTimer = null;
+                        document.getElementById('extractIntervalFramesBtn').querySelector('span').textContent = translations[localStorage.getItem('currentLang') || 'en']['extractIntervalFrames']; // Default to English
+                    }
+                    updateButtonStates(); 
+                }
+            );
         });
 
         downloadAllFramesBtn.addEventListener('click', () => {
@@ -1291,7 +1365,7 @@
         downloadSelectedFramesBtn.addEventListener('click', () => {
             const selectedFrames = extractedFramesContainer.querySelectorAll('.frame-wrapper[data-selected="true"]');
             if (selectedFrames.length === 0) {
-                alert(translations[localStorage.getItem('currentLang') || 'zh']['alertSelectOneFrame']);
+                alert(translations[localStorage.getItem('currentLang') || 'en']['alertSelectOneFrame']); // Default to English
                 return;
             } else if (selectedFrames.length === 1) {
                 // Download single image if only one is selected
@@ -1307,41 +1381,9 @@
 
         window.onbeforeunload = function() {
             if (extractedFramesContainer.children.length > 0) {
-                return translations[localStorage.getItem('currentLang') || 'zh']['refreshConfirm'];
+                return translations[localStorage.getItem('currentLang') || 'en']['refreshConfirm']; // Default to English
             }
         };
-
-        // Feedback Modal Logic
-        feedbackButton.addEventListener('click', () => {
-            feedbackModal.classList.remove('hidden');
-            const currentLang = localStorage.getItem('currentLang') || 'zh';
-            feedbackModal.querySelector('[data-lang-key="feedbackModalTitle"]').textContent = translations[currentLang]['feedbackModalTitle'];
-            feedbackInput.setAttribute('placeholder', translations[currentLang]['feedbackPlaceholder']);
-            feedbackModal.querySelector('#submitFeedbackBtn span').textContent = translations[currentLang]['submitFeedback'];
-            feedbackModal.querySelector('#cancelFeedbackBtn span').textContent = translations[currentLang]['confirmNo'];
-        });
-
-        cancelFeedbackBtn.addEventListener('click', () => {
-            feedbackModal.classList.add('hidden');
-            feedbackInput.value = ''; // Clear input on cancel
-        });
-
-        submitFeedbackBtn.addEventListener('click', () => {
-            const feedbackText = feedbackInput.value.trim();
-            const currentLang = localStorage.getItem('currentLang') || 'zh';
-            if (feedbackText) {
-                const subject = encodeURIComponent(translations[currentLang]['feedbackEmailSubject']);
-                const body = encodeURIComponent(translations[currentLang]['feedbackEmailBodyPrefix'] + feedbackText);
-                const mailtoLink = `mailto:uxbillzou@gmail.com?subject=${subject}&body=${body}`;
-                
-                window.open(mailtoLink, '_blank'); // Open email client
-                alert(translations[currentLang]['feedbackSentAlert']); // Inform user
-                feedbackModal.classList.add('hidden');
-                feedbackInput.value = ''; // Clear input after submission
-            } else {
-                alert(translations[currentLang]['feedbackPlaceholder']); // Prompt if empty
-            }
-        });
     </script>
 </body>
 </html>
