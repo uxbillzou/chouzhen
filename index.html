@@ -15,7 +15,7 @@
     <!-- 3. 工具库 (JSZip, FileSaver, ExcelJS) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <!-- 替换为 ExcelJS 以支持插入图片 -->
+    <!-- 引入 SheetJS 用于导出 Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
     <style>
@@ -120,6 +120,7 @@
                 apiKeyLabel: "Google Gemini API Key",
                 apiKeyPlaceholder: "在此粘贴您的 API Key (以 AIza 开头)",
                 apiKeyHelp: "您的密钥仅存储在本地浏览器中，不会上传到任何服务器。",
+                apiKeyTip: "找不到Key？赞赏作者8.8，然后凭截图添加作者，即可获得",
                 save: "保存",
                 noKeyError: "请先在设置中配置 API Key 才能使用 AI 功能"
             },
@@ -182,6 +183,7 @@
                 apiKeyLabel: "Google Gemini API Key",
                 apiKeyPlaceholder: "Paste your API Key here (starts with AIza)",
                 apiKeyHelp: "Your key is stored locally in your browser and never sent to our servers.",
+                apiKeyTip: "Can't find a Key? Donate 8.8 to the author, then add the author with a screenshot to get one.",
                 save: "Save",
                 noKeyError: "Please configure API Key in settings first"
             }
@@ -327,6 +329,7 @@
                                 <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Key size={14} /> {t.apiKeyLabel}</label>
                                 <input type="password" value={tempKey} onChange={(e) => setTempKey(e.target.value)} placeholder={t.apiKeyPlaceholder} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none" />
                                 <p className="text-xs text-slate-500">{t.apiKeyHelp}</p>
+                                <p className="text-xs text-indigo-400 mt-2 font-medium">{t.apiKeyTip}</p>
                             </div>
                         </div>
                         <div className="bg-slate-950/50 p-4 flex justify-end border-t border-slate-800"><button onClick={handleSave} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg shadow-lg transition-all active:scale-95">{t.save}</button></div>
