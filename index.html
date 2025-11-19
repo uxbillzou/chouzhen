@@ -12,9 +12,11 @@
     <!-- 2. 编译核心 (Babel - 用于解析 JSX) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- 3. 工具库 (JSZip & FileSaver) -->
+    <!-- 3. 工具库 (JSZip, FileSaver, ExcelJS) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- 替换为 ExcelJS 以支持插入图片 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -28,12 +30,14 @@
         
         #loading-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #0f172a; color: #94a3b8; z-index: 50; transition: opacity 0.5s; }
         
-        /* 设置面板动画 */
+        /* 动画 */
         .slide-in { animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .fade-in { animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200">
+<body class="bg-slate-950 text-slate-200 overflow-x-hidden">
 
     <!-- 初始加载提示 -->
     <div id="loading-screen">
@@ -46,15 +50,13 @@
 
     <!-- 4. 核心逻辑 -->
     <script type="text/babel" data-type="module">
-        // --- 核心：直接从 CDN 导入模块 ---
         import React, { useState, useRef, useEffect } from 'https://esm.sh/react@18.2.0';
         import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
         
-        // 导入所有需要的图标
         import { 
             Upload, Image as ImageIcon, Film, Clock, Layers, Check, Play, Pause, 
             SkipForward, Camera, FileVideo, Aperture, Zap, Download, Trash2, 
-            Sparkles, Globe, Languages, QrCode, X, Settings, Key
+            Sparkles, Globe, Languages, QrCode, X, Settings, Key, RotateCcw, FileSpreadsheet
         } from 'https://esm.sh/lucide-react@0.263.1';
 
         // --- 翻译配置 ---
@@ -86,7 +88,8 @@
                 clearAll: "清空全部",
                 deleteSelected: "删除选中",
                 downloadSelected: "下载选中",
-                downloadZip: "打包下载全部",
+                downloadZip: "打包下载全部 (ZIP)",
+                downloadXlsx: "导出分镜表 (Excel)",
                 aiAnalyzeAll: "AI 智能识别内容",
                 noFrames: "暂无截图",
                 noFramesDesc: "请先上传视频开始处理",
@@ -97,12 +100,17 @@
                 modalConfirm: "操作确认",
                 msgFileError: "请上传有效的视频文件 (MP4, MOV, WebM)",
                 msgClearConfirm: "确定要清空当前所有已生成的截图吗？此操作不可恢复。",
+                msgRemoveVideoConfirm: "确定要移除当前视频吗？这将同时清空所有截图。",
                 msgAiComplete: "AI 画面分析已完成！",
-                aiPrompt: "请用极其简练的中文描述这张图片的内容（15字以内），不要包含'这张图片'等废话。直接描述画面。",
+                msgSwitchClear: "切换模式时，您希望如何处理已有的截图？",
+                // 增强的中文提示词
+                aiPrompt: "请分析这张视频截图。请严格按照以下格式输出4项内容：1.【景别】(如特写、中景、远景等)；2.【风格】(如赛博朋克、极简、复古、写实等)；3.【构图】(如中心构图、三分法、对称等)；4. 画面内容的简练描述(20字以内)。\n格式示例：【景别：特写】【风格：日系】【构图：中心】一只猫在睡觉。",
                 seconds: "秒",
                 timePoint: "时间点",
                 cancel: "取消",
                 confirm: "确定",
+                clearAndSwitch: "清空并切换",
+                keepAndSwitch: "保留并切换",
                 librariesLoading: "加载资源中...",
                 systemReady: "系统就绪",
                 qrTitle: "支持我 / 与我一起完善",
@@ -143,6 +151,7 @@
                 deleteSelected: "Delete Selected",
                 downloadSelected: "Download Selected",
                 downloadZip: "Download All (ZIP)",
+                downloadXlsx: "Export Storyboard (Excel)",
                 aiAnalyzeAll: "AI Content Analysis",
                 noFrames: "No Frames Captured",
                 noFramesDesc: "Upload a video to start extraction",
@@ -153,12 +162,17 @@
                 modalConfirm: "Confirm",
                 msgFileError: "Please upload a valid video file (MP4, MOV, WebM)",
                 msgClearConfirm: "Are you sure you want to clear all frames?",
+                msgRemoveVideoConfirm: "Remove video and clear all frames?",
+                msgSwitchClear: "How do you want to handle existing frames when switching modes?",
                 msgAiComplete: "AI Analysis Complete!",
-                aiPrompt: "Describe this image content concisely in English (under 10 words). Direct description only.",
+                // 增强的英文提示词
+                aiPrompt: "Analyze this frame. Provide 4 items strictly in this format: [Shot: <Shot Size>] [Style: <Style>] [Composition: <Composition>] <Content Description (concise)>.\nExample: [Shot: Close-up] [Style: Cinematic] [Composition: Rule of Thirds] A cat sleeping.",
                 seconds: "sec",
                 timePoint: "Time",
                 cancel: "Cancel",
                 confirm: "Confirm",
+                clearAndSwitch: "Clear & Switch",
+                keepAndSwitch: "Keep & Switch",
                 librariesLoading: "Loading Libs...",
                 systemReady: "System Ready",
                 qrTitle: "Support Me / Collaborate",
@@ -206,10 +220,8 @@
             } catch (e) { return '#000'; }
         };
 
-        // 修改：接受 apiKey 参数
         const analyzeImageWithGemini = async (base64Data, prompt, apiKey) => {
             if (!apiKey) return ""; 
-            
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             try {
                 const response = await fetch(url, {
@@ -217,36 +229,82 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }] })
                 });
-                
-                if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
-                }
-
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
                 const data = await response.json();
                 return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-            } catch (error) { 
-                console.error("Gemini Error", error); 
-                return `Error: ${error.message}`; 
-            }
+            } catch (error) { console.error("Gemini Error", error); return `Error: ${error.message}`; }
         };
 
-        // --- 组件 ---
-        const Modal = ({ isOpen, title, message, type = 'alert', onConfirm, onCancel, texts }) => {
+        // --- Tech Background ---
+        const TechBackground = () => {
+            const canvasRef = useRef(null);
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let width, height, particles = [];
+                const resize = () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; initParticles(); };
+                const initParticles = () => {
+                    particles = [];
+                    const count = Math.floor((width * height) / 15000);
+                    for (let i = 0; i < count; i++) particles.push({ x: Math.random() * width, y: Math.random() * height, vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5, size: Math.random() * 2 + 1 });
+                };
+                const draw = () => {
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.fillStyle = 'rgba(129, 140, 248, 0.2)'; 
+                    ctx.strokeStyle = 'rgba(99, 102, 241, 0.1)';
+                    for (let i = 0; i < particles.length; i++) {
+                        let p = particles[i];
+                        p.x += p.vx; p.y += p.vy;
+                        if (p.x < 0 || p.x > width) p.vx *= -1;
+                        if (p.y < 0 || p.y > height) p.vy *= -1;
+                        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+                        for (let j = i + 1; j < particles.length; j++) {
+                            let p2 = particles[j];
+                            let dist = Math.sqrt((p.x - p2.x)**2 + (p.y - p2.y)**2);
+                            if (dist < 120) { ctx.lineWidth = 1 - dist / 120; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); }
+                        }
+                    }
+                    requestAnimationFrame(draw);
+                };
+                window.addEventListener('resize', resize); resize(); draw();
+                return () => window.removeEventListener('resize', resize);
+            }, []);
+            return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full pointer-events-none z-0" style={{background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)'}} />;
+        };
+
+        // --- 模态框 (增强版：支持自定义按钮) ---
+        const Modal = ({ isOpen, title, message, type = 'alert', onConfirm, onCancel, customButtons, texts }) => {
             if (!isOpen) return null;
             return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-[fadeIn_0.2s_ease-out]">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden slide-in">
                         <div className="p-5">
                             <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
                                 {type === 'danger' && <Trash2 size={20} className="text-red-500"/>}
                                 {type === 'success' && <Check size={20} className="text-green-500"/>}
+                                {type === 'switch' && <RotateCcw size={20} className="text-amber-500"/>}
                                 {title}
                             </h3>
-                            <p className="text-slate-300 text-sm leading-relaxed">{message}</p>
+                            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{message}</p>
                         </div>
                         <div className="bg-slate-950/50 p-4 flex justify-end gap-3 border-t border-slate-800">
-                            {(type === 'confirm' || type === 'danger') && <button onClick={onCancel} className="px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg">{texts.cancel}</button>}
-                            <button onClick={onConfirm} className={`px-4 py-2 text-sm font-medium rounded-lg shadow-lg active:scale-95 ${type === 'danger' ? 'bg-red-500 text-white' : 'bg-indigo-600 text-white'}`}>{texts.confirm}</button>
+                            {customButtons ? (
+                                <>
+                                    <button onClick={onCancel} className="px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">{texts.cancel}</button>
+                                    {customButtons.map((btn, idx) => (
+                                        <button key={idx} onClick={btn.onClick} className={`px-4 py-2 text-sm font-medium rounded-lg shadow-lg active:scale-95 ${btn.className}`}>
+                                            {btn.label}
+                                        </button>
+                                    ))}
+                                </>
+                            ) : (
+                                <>
+                                    {(type === 'confirm' || type === 'danger') && (
+                                        <button onClick={onCancel} className="px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">{texts.cancel}</button>
+                                    )}
+                                    <button onClick={onConfirm} className={`px-4 py-2 text-sm font-medium rounded-lg shadow-lg active:scale-95 ${type === 'danger' ? 'bg-red-500 text-white' : 'bg-indigo-600 text-white'}`}>{texts.confirm}</button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -256,43 +314,22 @@
         const SettingsModal = ({ isOpen, onClose, apiKey, setApiKey, t }) => {
             if (!isOpen) return null;
             const [tempKey, setTempKey] = React.useState(apiKey);
-
-            const handleSave = () => {
-                setApiKey(tempKey);
-                localStorage.setItem('gemini_api_key', tempKey);
-                onClose();
-            };
-
+            const handleSave = () => { setApiKey(tempKey); localStorage.setItem('gemini_api_key', tempKey); onClose(); };
             return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 fade-in">
                     <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden slide-in">
                         <div className="p-6 space-y-4">
                             <div className="flex justify-between items-center">
-                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                    <Settings className="w-5 h-5 text-indigo-400" /> {t.settingsTitle}
-                                </h3>
+                                <h3 className="text-xl font-bold text-white flex items-center gap-2"><Settings className="w-5 h-5 text-indigo-400" /> {t.settingsTitle}</h3>
                                 <button onClick={onClose} className="text-slate-500 hover:text-white"><X size={20} /></button>
                             </div>
-                            
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                                    <Key size={14} /> {t.apiKeyLabel}
-                                </label>
-                                <input 
-                                    type="password" 
-                                    value={tempKey}
-                                    onChange={(e) => setTempKey(e.target.value)}
-                                    placeholder={t.apiKeyPlaceholder}
-                                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                                />
+                                <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Key size={14} /> {t.apiKeyLabel}</label>
+                                <input type="password" value={tempKey} onChange={(e) => setTempKey(e.target.value)} placeholder={t.apiKeyPlaceholder} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none" />
                                 <p className="text-xs text-slate-500">{t.apiKeyHelp}</p>
                             </div>
                         </div>
-                        <div className="bg-slate-950/50 p-4 flex justify-end border-t border-slate-800">
-                             <button onClick={handleSave} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg shadow-lg transition-all active:scale-95">
-                                {t.save}
-                            </button>
-                        </div>
+                        <div className="bg-slate-950/50 p-4 flex justify-end border-t border-slate-800"><button onClick={handleSave} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg shadow-lg transition-all active:scale-95">{t.save}</button></div>
                     </div>
                 </div>
             );
@@ -301,19 +338,19 @@
         const App = () => {
             const [lang, setLang] = useState('zh');
             const t = TRANSLATIONS[lang];
-            
-            // API Key State
             const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
             const [showSettings, setShowSettings] = useState(false);
-
+            
             const [videoFile, setVideoFile] = useState(null);
             const [videoSrc, setVideoSrc] = useState(null);
             const [frames, setFrames] = useState([]);
             const [selectedFrameIds, setSelectedFrameIds] = useState(new Set());
+            
             const [intervalSec, setIntervalSec] = useState(1);
             const [sceneThreshold, setSceneThreshold] = useState(15);
             const [minSceneDuration, setMinSceneDuration] = useState(0.5);
             const [activeTab, setActiveTab] = useState('interval');
+            
             const [isProcessing, setIsProcessing] = useState(false);
             const [progress, setProgress] = useState(0);
             const [processStatus, setProcessStatus] = useState('');
@@ -321,165 +358,42 @@
             const [isPlaying, setIsPlaying] = useState(false);
             const [currentTime, setCurrentTime] = useState(0);
             const [duration, setDuration] = useState(0);
-            const [librariesLoaded, setLibrariesLoaded] = useState(true);
-            const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', type: 'alert', onConfirm: () => {} });
+            
+            // Modal Config State
+            const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', type: 'alert', onConfirm: () => {}, customButtons: null });
             
             const videoRef = useRef(null);
             const canvasRef = useRef(null);
             const processingCanvasRef = useRef(null);
             const fileInputRef = useRef(null);
 
-            useEffect(() => {
-                const loader = document.getElementById('loading-screen');
-                if (loader) loader.style.display = 'none';
-            }, []);
+            useEffect(() => { const loader = document.getElementById('loading-screen'); if (loader) loader.style.display = 'none'; }, []);
 
             useEffect(() => {
                 setFrames(prev => prev.map(frame => {
                     const timeStr = frame.time.toFixed(2);
                     const zhDef = `${TRANSLATIONS.zh.timePoint}: ${timeStr}s`;
                     const enDef = `${TRANSLATIONS.en.timePoint}: ${timeStr}s`;
-                    if (frame.description === zhDef || frame.description === enDef) {
-                        return { ...frame, description: `${t.timePoint}: ${timeStr}s` };
-                    }
+                    if (frame.description === zhDef || frame.description === enDef) return { ...frame, description: `${t.timePoint}: ${timeStr}s` };
                     return frame;
                 }));
             }, [lang, t]);
 
-            const showModal = (title, message, type = 'alert', onConfirm = () => {}) => {
-                setModalConfig({ isOpen: true, title, message, type, onConfirm: () => { onConfirm(); closeModal(); }, onCancel: closeModal });
+            // 通用 Modal 控制
+            const showModal = (config) => {
+                setModalConfig({ 
+                    isOpen: true, 
+                    title: config.title || '', 
+                    message: config.message || '', 
+                    type: config.type || 'alert', 
+                    onConfirm: () => { if(config.onConfirm) config.onConfirm(); closeModal(); }, 
+                    onCancel: closeModal,
+                    customButtons: config.customButtons || null
+                });
             };
             const closeModal = () => setModalConfig(prev => ({ ...prev, isOpen: false }));
 
-            const captureFrame = (video, time, meta = {}) => {
-                const canvas = canvasRef.current;
-                const ctx = canvas.getContext('2d');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const color = getDominantColor(ctx, canvas.width, canvas.height);
-                return {
-                    id: Date.now() + Math.random(),
-                    dataUrl: canvas.toDataURL('image/jpeg', 0.85),
-                    time: time,
-                    width: canvas.width,
-                    height: canvas.height,
-                    description: `${t.timePoint}: ${time.toFixed(2)}s`,
-                    meta: { color, ...meta }
-                };
-            };
-
-            const extractLastFrame = async () => {
-                if (!videoRef.current) return;
-                setIsProcessing(true);
-                const video = videoRef.current;
-                const originalTime = video.currentTime;
-                const wasPlaying = !video.paused;
-                if(wasPlaying) video.pause();
-                try {
-                    const targetTime = Math.max(0, video.duration - 0.1);
-                    video.currentTime = targetTime;
-                    await new Promise(r => { video.addEventListener('seeked', r, { once: true }); });
-                    const frame = captureFrame(video, targetTime);
-                    setFrames(prev => [frame, ...prev]);
-                } catch (e) { showModal(t.modalError, "截取失败"); } 
-                finally { video.currentTime = originalTime; setIsProcessing(false); if(wasPlaying) video.play(); }
-            };
-
-            const detectSceneChanges = async () => {
-                if (!videoRef.current) return;
-                setIsProcessing(true);
-                setProcessStatus(t.analyzing);
-                const video = videoRef.current;
-                video.pause();
-                const newFrames = [];
-                let lastSavedTime = -minSceneDuration; 
-                let prevImageData = null;
-                const diffCtx = processingCanvasRef.current.getContext('2d', { willReadFrequently: true });
-                processingCanvasRef.current.width = 64; processingCanvasRef.current.height = 64; 
-                const step = 0.2; 
-                let currentTimeCursor = 0;
-                const totalDuration = video.duration;
-
-                try {
-                    video.currentTime = 0;
-                    await new Promise(r => { video.addEventListener('seeked', r, { once: true }); });
-                    diffCtx.drawImage(video, 0, 0, 64, 64);
-                    prevImageData = diffCtx.getImageData(0, 0, 64, 64).data;
-                    newFrames.push(captureFrame(video, 0, { diffScore: 100 }));
-                    lastSavedTime = 0;
-                    currentTimeCursor += step;
-                    while (currentTimeCursor < totalDuration) {
-                        setProgress(Math.round((currentTimeCursor / totalDuration) * 100));
-                        video.currentTime = currentTimeCursor;
-                        await new Promise(r => { video.addEventListener('seeked', r, { once: true }); });
-                        diffCtx.drawImage(video, 0, 0, 64, 64);
-                        const currentImageData = diffCtx.getImageData(0, 0, 64, 64).data;
-                        const diff = calculateFrameDifference(prevImageData, currentImageData);
-                        if (diff > sceneThreshold && (currentTimeCursor - lastSavedTime) >= minSceneDuration) {
-                            newFrames.push(captureFrame(video, currentTimeCursor, { diffScore: diff.toFixed(1) }));
-                            lastSavedTime = currentTimeCursor;
-                        }
-                        prevImageData = currentImageData;
-                        currentTimeCursor += step;
-                    }
-                    setFrames(prev => [...prev, ...newFrames]);
-                    showModal(t.modalSuccess, `${t.results}: ${newFrames.length}`, 'success');
-                } catch (e) { console.error(e); showModal(t.modalError, e.message); } 
-                finally { setIsProcessing(false); setProgress(0); setProcessStatus(''); video.currentTime = 0; }
-            };
-
-            const extractByInterval = async () => {
-                if (!videoRef.current || intervalSec <= 0) return;
-                setIsProcessing(true);
-                setProcessStatus(t.intervalExtract);
-                const video = videoRef.current;
-                video.pause();
-                const newFrames = [];
-                let currentTimeCursor = 0;
-                const totalDuration = video.duration;
-                try {
-                    while (currentTimeCursor <= totalDuration) {
-                        setProgress(Math.round((currentTimeCursor / totalDuration) * 100));
-                        video.currentTime = currentTimeCursor;
-                        await new Promise(r => { video.addEventListener('seeked', r, { once: true }); });
-                        newFrames.push(captureFrame(video, currentTimeCursor));
-                        currentTimeCursor += parseFloat(intervalSec);
-                    }
-                    setFrames(prev => [...prev, ...newFrames]);
-                    showModal(t.modalSuccess, `${t.results}: ${newFrames.length}`, 'success');
-                } catch (e) { console.error(e); } 
-                finally { setIsProcessing(false); setProgress(0); setProcessStatus(''); video.currentTime = 0; }
-            };
-
-            const runBatchAIAnalysis = async () => {
-                if (frames.length === 0) return;
-                
-                // 检查是否配置了 Key
-                if (!apiKey) {
-                    setShowSettings(true);
-                    // 这里稍微延迟显示错误，体验更好
-                    setTimeout(() => alert(t.noKeyError), 100);
-                    return;
-                }
-
-                setIsProcessing(true);
-                setProcessStatus(t.aiAnalyzing);
-                let completed = 0;
-                for (let i = 0; i < frames.length; i++) {
-                    try {
-                        if (i > 0) await new Promise(r => setTimeout(r, 800));
-                        const desc = await analyzeImageWithGemini(frames[i].dataUrl.split(',')[1], t.aiPrompt, apiKey);
-                        if (desc) setFrames(prev => { const next = [...prev]; if(next[i]) next[i].description = desc.trim(); return next; });
-                    } catch (e) { console.error(e); }
-                    completed++;
-                    setProgress(Math.round((completed / frames.length) * 100));
-                }
-                setIsProcessing(false);
-                setProgress(0);
-                showModal(t.modalSuccess, t.msgAiComplete, 'success');
-            };
-
+            // 核心业务逻辑
             const handleFile = (file) => {
                 if (file && file.type.startsWith('video/')) {
                     if (videoSrc) URL.revokeObjectURL(videoSrc);
@@ -488,13 +402,145 @@
                     setFrames([]);
                     setSelectedFrameIds(new Set());
                     setIsPlaying(false);
-                } else { showModal(t.modalError, t.msgFileError); }
+                } else { showModal({title: t.modalError, message: t.msgFileError, type: 'alert'}); }
+            };
+
+            const handleRemoveVideo = () => {
+                showModal({
+                    title: t.modalConfirm,
+                    message: t.msgRemoveVideoConfirm,
+                    type: 'danger',
+                    onConfirm: () => {
+                        if (videoSrc) URL.revokeObjectURL(videoSrc);
+                        setVideoFile(null);
+                        setVideoSrc(null);
+                        setFrames([]);
+                        setSelectedFrameIds(new Set());
+                        setIsPlaying(false);
+                        setCurrentTime(0);
+                        setDuration(0);
+                    }
+                });
+            };
+
+            const handleTabChange = (targetTab) => {
+                if (activeTab === targetTab) return;
+
+                if (frames.length > 0) {
+                    showModal({
+                        title: t.modalConfirm,
+                        message: t.msgSwitchClear,
+                        type: 'switch',
+                        customButtons: [
+                            {
+                                label: t.keepAndSwitch,
+                                className: "bg-slate-700 hover:bg-slate-600 text-white",
+                                onClick: () => { setActiveTab(targetTab); closeModal(); }
+                            },
+                            {
+                                label: t.clearAndSwitch,
+                                className: "bg-indigo-600 hover:bg-indigo-500 text-white",
+                                onClick: () => { 
+                                    setFrames([]); 
+                                    setSelectedFrameIds(new Set()); 
+                                    setActiveTab(targetTab); 
+                                    closeModal(); 
+                                }
+                            }
+                        ]
+                    });
+                } else {
+                    setActiveTab(targetTab);
+                }
+            };
+
+            const captureFrame = (video, time, meta = {}) => {
+                const canvas = canvasRef.current; const ctx = canvas.getContext('2d');
+                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const color = getDominantColor(ctx, canvas.width, canvas.height);
+                return { id: Date.now() + Math.random(), dataUrl: canvas.toDataURL('image/jpeg', 0.85), time: time, width: canvas.width, height: canvas.height, description: `${t.timePoint}: ${time.toFixed(2)}s`, meta: { color, ...meta } };
+            };
+
+            const extractLastFrame = async () => {
+                if (!videoRef.current) return;
+                setIsProcessing(true);
+                const video = videoRef.current; const originalTime = video.currentTime; const wasPlaying = !video.paused; if(wasPlaying) video.pause();
+                try {
+                    const targetTime = Math.max(0, video.duration - 0.1);
+                    video.currentTime = targetTime;
+                    await new Promise(r => { video.addEventListener('seeked', r, { once: true }); });
+                    const frame = captureFrame(video, targetTime);
+                    setFrames(prev => [frame, ...prev]);
+                } catch (e) { showModal({title: t.modalError, message: "截取失败", type: 'alert'}); } 
+                finally { video.currentTime = originalTime; setIsProcessing(false); if(wasPlaying) video.play(); }
+            };
+
+            const detectSceneChanges = async () => {
+                if (!videoRef.current) return;
+                setIsProcessing(true); setProcessStatus(t.analyzing);
+                const video = videoRef.current; video.pause();
+                const newFrames = []; let lastSavedTime = -minSceneDuration; let prevImageData = null;
+                const diffCtx = processingCanvasRef.current.getContext('2d', { willReadFrequently: true });
+                processingCanvasRef.current.width = 64; processingCanvasRef.current.height = 64; const step = 0.2; let currentTimeCursor = 0; const totalDuration = video.duration;
+                try {
+                    video.currentTime = 0; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); });
+                    diffCtx.drawImage(video, 0, 0, 64, 64); prevImageData = diffCtx.getImageData(0, 0, 64, 64).data;
+                    newFrames.push(captureFrame(video, 0, { diffScore: 100 })); lastSavedTime = 0; currentTimeCursor += step;
+                    while (currentTimeCursor < totalDuration) {
+                        setProgress(Math.round((currentTimeCursor / totalDuration) * 100));
+                        video.currentTime = currentTimeCursor; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); });
+                        diffCtx.drawImage(video, 0, 0, 64, 64); const currentImageData = diffCtx.getImageData(0, 0, 64, 64).data;
+                        const diff = calculateFrameDifference(prevImageData, currentImageData);
+                        if (diff > sceneThreshold && (currentTimeCursor - lastSavedTime) >= minSceneDuration) {
+                            newFrames.push(captureFrame(video, currentTimeCursor, { diffScore: diff.toFixed(1) })); lastSavedTime = currentTimeCursor;
+                        }
+                        prevImageData = currentImageData; currentTimeCursor += step;
+                    }
+                    setFrames(prev => [...prev, ...newFrames]); showModal({title: t.modalSuccess, message: `${t.results}: ${newFrames.length}`, type: 'success'});
+                } catch (e) { console.error(e); showModal({title: t.modalError, message: e.message, type: 'alert'}); } 
+                finally { setIsProcessing(false); setProgress(0); setProcessStatus(''); video.currentTime = 0; }
+            };
+
+            const extractByInterval = async () => {
+                if (!videoRef.current || intervalSec <= 0) return;
+                setIsProcessing(true); setProcessStatus(t.intervalExtract);
+                const video = videoRef.current; video.pause();
+                const newFrames = []; let currentTimeCursor = 0; const totalDuration = video.duration;
+                try {
+                    while (currentTimeCursor <= totalDuration) {
+                        setProgress(Math.round((currentTimeCursor / totalDuration) * 100));
+                        video.currentTime = currentTimeCursor; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); });
+                        newFrames.push(captureFrame(video, currentTimeCursor)); currentTimeCursor += parseFloat(intervalSec);
+                    }
+                    setFrames(prev => [...prev, ...newFrames]); showModal({title: t.modalSuccess, message: `${t.results}: ${newFrames.length}`, type: 'success'});
+                } catch (e) { console.error(e); } 
+                finally { setIsProcessing(false); setProgress(0); setProcessStatus(''); video.currentTime = 0; }
+            };
+
+            const runBatchAIAnalysis = async () => {
+                if (frames.length === 0) return;
+                if (!apiKey) { setShowSettings(true); setTimeout(() => alert(t.noKeyError), 100); return; }
+                setIsProcessing(true); setProcessStatus(t.aiAnalyzing); let completed = 0;
+                for (let i = 0; i < frames.length; i++) {
+                    try {
+                        if (i > 0) await new Promise(r => setTimeout(r, 800));
+                        const desc = await analyzeImageWithGemini(frames[i].dataUrl.split(',')[1], t.aiPrompt, apiKey);
+                        if (desc) setFrames(prev => { const next = [...prev]; if(next[i]) next[i].description = desc.trim(); return next; });
+                    } catch (e) { console.error(e); }
+                    completed++; setProgress(Math.round((completed / frames.length) * 100));
+                }
+                setIsProcessing(false); setProgress(0); showModal({title: t.modalSuccess, message: t.msgAiComplete, type: 'success'});
+            };
+
+            const clearAllFrames = () => {
+                if (frames.length === 0) return;
+                showModal({title: t.modalConfirm, message: t.msgClearConfirm, type: 'danger', onConfirm: () => { setFrames([]); setSelectedFrameIds(new Set()); }});
             };
 
             const downloadZip = () => {
-                if (!window.JSZip) return showModal(t.modalError, t.librariesLoading);
-                const zip = new window.JSZip();
-                const folder = zip.folder("extracted_frames");
+                if (!window.JSZip) return showModal({title: t.modalError, message: t.librariesLoading, type: 'alert'});
+                const zip = new window.JSZip(); const folder = zip.folder("extracted_frames");
                 frames.forEach((frame, index) => {
                     const safeDesc = frame.description.replace(/[^a-z0-9\u4e00-\u9fa5]/gi, '_').substring(0, 30);
                     folder.file(`frame_${index}_${frame.time.toFixed(2)}s_${safeDesc}.jpg`, frame.dataUrl.split(',')[1], { base64: true });
@@ -502,148 +548,249 @@
                 zip.generateAsync({ type: "blob" }).then(content => window.saveAs(content, "frames.zip"));
             };
 
+            // --- 使用 ExcelJS 导出带图片的分镜表 ---
+            const downloadStoryboard = async () => {
+                if (!window.ExcelJS) return showModal({title: t.modalError, message: t.librariesLoading, type: 'alert'});
+                
+                // 1. 创建工作簿
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet('Storyboard');
+
+                // 2. 设置列头
+                worksheet.columns = [
+                    { header: '序号 (No.)', key: 'no', width: 8 },
+                    { header: '画面 (Image)', key: 'image', width: 24 }, // 约对应 200px 宽
+                    { header: '时间点 (Time)', key: 'time', width: 12 },
+                    { header: '景别 (Shot)', key: 'shot', width: 15 },
+                    { header: '风格 (Style)', key: 'style', width: 15 },
+                    { header: '构图 (Composition)', key: 'comp', width: 15 },
+                    { header: '画面内容 (Content)', key: 'content', width: 40 },
+                    { header: '主色 (Color)', key: 'color', width: 12 }
+                ];
+
+                // 3. 填充数据和图片
+                for (let i = 0; i < frames.length; i++) {
+                    const frame = frames[i];
+                    
+                    // 解析AI返回的结构化描述
+                    let shot = "", style = "", composition = "", content = frame.description;
+                    const shotMatch = frame.description.match(/【景别[：:]\s*(.*?)】/);
+                    const styleMatch = frame.description.match(/【风格[：:]\s*(.*?)】/);
+                    const compMatch = frame.description.match(/【构图[：:]\s*(.*?)】/);
+                    
+                    const shotMatchEn = frame.description.match(/\[Shot[：:]\s*(.*?)\]/i);
+                    const styleMatchEn = frame.description.match(/\[Style[：:]\s*(.*?)\]/i);
+                    const compMatchEn = frame.description.match(/\[Composition[：:]\s*(.*?)\]/i);
+
+                    if(shotMatch) shot = shotMatch[1]; else if(shotMatchEn) shot = shotMatchEn[1];
+                    if(styleMatch) style = styleMatch[1]; else if(styleMatchEn) style = styleMatchEn[1];
+                    if(compMatch) composition = compMatch[1]; else if(compMatchEn) composition = compMatchEn[1];
+                    
+                    content = frame.description.replace(/【.*?】|\[.*?\]/g, '').trim();
+
+                    // 添加文字行
+                    const row = worksheet.addRow({
+                        no: i + 1,
+                        image: '', // 图片占位
+                        time: `${frame.time.toFixed(2)}s`,
+                        shot: shot || "-",
+                        style: style || "-",
+                        comp: composition || "-",
+                        content: content || frame.description,
+                        color: frame.meta.color || "-"
+                    });
+
+                    // 设置行高以容纳图片 (单位: points, 90pts ≈ 120px)
+                    row.height = 90;
+
+                    // 设置垂直居中
+                    row.eachCell({ includeEmpty: true }, (cell) => {
+                        cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+                        if(cell.col === 1) cell.alignment.horizontal = 'center'; // 序号居中
+                    });
+
+                    // 添加图片到 Workbook
+                    const base64Data = frame.dataUrl.split(',')[1];
+                    const imageId = workbook.addImage({
+                        base64: base64Data,
+                        extension: 'jpeg',
+                    });
+
+                    // 将图片放置在第二列 (B列) 的对应行
+                    // tl: top-left { col: 1.1, row: i + 1.1 } (加一点padding)
+                    worksheet.addImage(imageId, {
+                        tl: { col: 1.05, row: i + 1.05 }, // B列索引为1，行索引需加1（因为有表头）
+                        br: { col: 1.95, row: i + 1.95 }, // 稍微留一点边距
+                        editAs: 'oneCell' // 图片随单元格大小变化
+                    });
+                }
+
+                // 4. 样式美化 (表头)
+                const headerRow = worksheet.getRow(1);
+                headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+                headerRow.height = 24;
+                headerRow.eachCell((cell) => {
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } }; // Indigo-600
+                });
+
+                // 5. 导出文件
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                window.saveAs(blob, "storyboard_分镜表.xlsx");
+            };
+
             return (
-                <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 pb-20">
+                <div className="min-h-screen text-slate-200 font-sans selection:bg-indigo-500/30 pb-20 relative overflow-hidden">
                     <Modal {...modalConfig} texts={{ cancel: t.cancel, confirm: t.confirm }} />
                     <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} apiKey={apiKey} setApiKey={setApiKey} t={t} />
-                    
                     <canvas ref={canvasRef} className="hidden-canvas" />
                     <canvas ref={processingCanvasRef} className="hidden-canvas" />
+                    <TechBackground />
 
-                    <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-40">
-                        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="bg-indigo-500 p-1.5 rounded-lg shadow-indigo-500/20 shadow-lg"><Film className="w-6 h-6 text-white" /></div>
-                                <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent hidden sm:block">{t.title}</h1>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <button 
-                                    onClick={() => setShowSettings(true)}
-                                    className={`p-2 rounded-lg transition-all ${apiKey ? 'text-slate-400 hover:text-indigo-400' : 'text-amber-400 animate-pulse hover:text-amber-300'}`}
-                                    title={t.settingsTitle}
-                                >
-                                    <Settings size={20} />
-                                </button>
-                                <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
-                                    <button onClick={() => setLang('zh')} className={`px-2 py-1 text-xs font-medium rounded-md ${lang === 'zh' ? 'bg-slate-600 text-white' : 'text-slate-400'}`}>中文</button>
-                                    <button onClick={() => setLang('en')} className={`px-2 py-1 text-xs font-medium rounded-md ${lang === 'en' ? 'bg-slate-600 text-white' : 'text-slate-400'}`}>EN</button>
+                    <div className="relative z-10">
+                        <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-40">
+                            <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-indigo-500 p-1.5 rounded-lg shadow-indigo-500/20 shadow-lg"><Film className="w-6 h-6 text-white" /></div>
+                                    <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent hidden sm:block">{t.title}</h1>
                                 </div>
-                            </div>
-                        </div>
-                    </header>
-
-                    <main className="max-w-7xl mx-auto px-4 py-8 grid lg:grid-cols-12 gap-8">
-                        <div className="lg:col-span-7 space-y-6">
-                            <div className={`relative group aspect-video bg-slate-900 rounded-2xl border-2 border-dashed overflow-hidden transition-all shadow-2xl ${dragActive ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800'} ${videoSrc ? 'border-none bg-black' : ''}`}
-                                onDragEnter={(e)=>{e.preventDefault();setDragActive(true)}} onDragLeave={(e)=>{e.preventDefault();setDragActive(false)}} onDragOver={(e)=>e.preventDefault()} onDrop={(e)=>{e.preventDefault();setDragActive(false);if(e.dataTransfer.files?.[0])handleFile(e.dataTransfer.files[0])}}>
-                                {videoSrc ? (
-                                    <>
-                                        <video ref={videoRef} src={videoSrc} className="w-full h-full object-contain" onTimeUpdate={()=>setCurrentTime(videoRef.current?.currentTime||0)} onLoadedMetadata={()=>setDuration(videoRef.current?.duration||0)} onClick={()=>{if(videoRef.current?.paused){videoRef.current.play();setIsPlaying(true)}else{videoRef.current?.pause();setIsPlaying(false)}}} />
-                                        <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-4">
-                                            <button onClick={()=>{if(videoRef.current?.paused){videoRef.current.play();setIsPlaying(true)}else{videoRef.current?.pause();setIsPlaying(false)}}} className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur rounded-full text-white">{isPlaying ? <Pause size={20}/> : <Play size={20}/>}</button>
-                                            <div className="flex-1 flex flex-col gap-1"><input type="range" min="0" max={duration||100} value={currentTime} onChange={(e)=>{const val=Number(e.target.value);if(videoRef.current)videoRef.current.currentTime=val;setCurrentTime(val)}} className="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-500" /></div>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
-                                        <div className="p-4 bg-slate-800/50 rounded-full mb-4"><Upload className="w-8 h-8 text-indigo-400" /></div>
-                                        <p className="text-lg font-medium text-slate-300">{t.uploadTitle}</p>
-                                        <p className="text-sm mt-2 text-slate-500">{t.uploadDesc}</p>
-                                        <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={(e)=>handleFile(e.target.files[0])} />
-                                        <button onClick={()=>fileInputRef.current?.click()} className="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-lg transition-all active:scale-95">{t.selectFile}</button>
+                                <div className="flex items-center gap-4">
+                                    <button onClick={() => setShowSettings(true)} className={`p-2 rounded-lg transition-all ${apiKey ? 'text-slate-400 hover:text-indigo-400' : 'text-amber-400 animate-pulse hover:text-amber-300'}`} title={t.settingsTitle}><Settings size={20} /></button>
+                                    <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
+                                        <button onClick={() => setLang('zh')} className={`px-2 py-1 text-xs font-medium rounded-md ${lang === 'zh' ? 'bg-slate-600 text-white' : 'text-slate-400'}`}>中文</button>
+                                        <button onClick={() => setLang('en')} className={`px-2 py-1 text-xs font-medium rounded-md ${lang === 'en' ? 'bg-slate-600 text-white' : 'text-slate-400'}`}>EN</button>
                                     </div>
-                                )}
-                                {isProcessing && <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-30"><h3 className="text-white font-bold text-xl">{progress}%</h3><p className="text-indigo-300 mt-2 text-sm font-medium animate-pulse">{processStatus}</p></div>}
-                            </div>
-
-                            <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
-                                <div className="flex border-b border-slate-800">
-                                    <button onClick={()=>setActiveTab('interval')} className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${activeTab==='interval'?'text-indigo-400 bg-slate-800/30':'text-slate-400 hover:text-slate-200'}`}><Clock size={16}/>{t.tabInterval}{activeTab==='interval'&&<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500"/>}</button>
-                                    <button onClick={()=>setActiveTab('scene')} className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${activeTab==='scene'?'text-purple-400 bg-slate-800/30':'text-slate-400 hover:text-slate-200'}`}><Aperture size={16}/>{t.tabScene}{activeTab==='scene'&&<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"/>}</button>
                                 </div>
-                                <div className="p-6">
-                                    {activeTab === 'interval' ? (
-                                        <div className="space-y-6">
-                                            <div className="flex items-center justify-between p-4 bg-slate-950/50 rounded-xl border border-slate-800">
-                                                <div className="space-y-1"><label className="text-sm font-medium text-slate-200">{t.intervalLabel}</label><p className="text-xs text-slate-500">{t.intervalDesc}</p></div>
-                                                <div className="flex items-center gap-3"><input type="number" min="0.1" step="0.1" value={intervalSec} onChange={(e)=>setIntervalSec(e.target.value)} className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-center text-indigo-300 font-mono outline-none" /><span className="text-sm text-slate-500">{t.seconds}</span></div>
+                            </div>
+                        </header>
+
+                        <main className="max-w-7xl mx-auto px-4 py-8 grid lg:grid-cols-12 gap-8">
+                            <div className="lg:col-span-7 space-y-6">
+                                <div className={`relative group aspect-video bg-slate-900/80 backdrop-blur-sm rounded-2xl border-2 border-dashed overflow-hidden transition-all shadow-2xl ${dragActive ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800'} ${videoSrc ? 'border-none bg-black' : ''}`}
+                                    onDragEnter={(e)=>{e.preventDefault();setDragActive(true)}} onDragLeave={(e)=>{e.preventDefault();setDragActive(false)}} onDragOver={(e)=>e.preventDefault()} onDrop={(e)=>{e.preventDefault();setDragActive(false);if(e.dataTransfer.files?.[0])handleFile(e.dataTransfer.files[0])}}>
+                                    {videoSrc ? (
+                                        <>
+                                            <video ref={videoRef} src={videoSrc} className="w-full h-full object-contain" onTimeUpdate={()=>setCurrentTime(videoRef.current?.currentTime||0)} onLoadedMetadata={()=>setDuration(videoRef.current?.duration||0)} onClick={()=>{if(videoRef.current?.paused){videoRef.current.play();setIsPlaying(true)}else{videoRef.current?.pause();setIsPlaying(false)}}} />
+                                            
+                                            {/* 关闭/移除视频按钮 */}
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); handleRemoveVideo(); }}
+                                                className="absolute top-4 right-4 p-2 bg-black/60 hover:bg-red-600/80 text-white rounded-full transition-all z-20 opacity-0 group-hover:opacity-100"
+                                                title="移除视频"
+                                            >
+                                                <X size={20} />
+                                            </button>
+
+                                            <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-4">
+                                                <button onClick={()=>{if(videoRef.current?.paused){videoRef.current.play();setIsPlaying(true)}else{videoRef.current?.pause();setIsPlaying(false)}}} className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur rounded-full text-white">{isPlaying ? <Pause size={20}/> : <Play size={20}/>}</button>
+                                                <div className="flex-1 flex flex-col gap-1"><input type="range" min="0" max={duration||100} value={currentTime} onChange={(e)=>{const val=Number(e.target.value);if(videoRef.current)videoRef.current.currentTime=val;setCurrentTime(val)}} className="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-500" /></div>
                                             </div>
-                                            <button onClick={extractByInterval} disabled={!videoSrc||isProcessing} className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]"><Layers size={18}/>{t.btnInterval}</button>
-                                        </div>
+                                        </>
                                     ) : (
-                                        <div className="space-y-6">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-3"><div className="flex justify-between"><label className="text-sm font-medium text-slate-200">{t.sceneThreshold}</label><span className="text-xs font-mono text-purple-400">{sceneThreshold}%</span></div><input type="range" min="5" max="50" step="1" value={sceneThreshold} onChange={(e)=>setSceneThreshold(Number(e.target.value))} className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500" /><p className="text-xs text-slate-500">{t.sceneThresholdDesc}</p></div>
-                                                <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-3"><div className="flex justify-between"><label className="text-sm font-medium text-slate-200">{t.minSceneDuration}</label><span className="text-xs font-mono text-purple-400">{minSceneDuration}s</span></div><input type="range" min="0.2" max="5" step="0.1" value={minSceneDuration} onChange={(e)=>setMinSceneDuration(Number(e.target.value))} className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500" /><p className="text-xs text-slate-500">{t.minSceneDurationDesc}</p></div>
-                                            </div>
-                                            <button onClick={detectSceneChanges} disabled={!videoSrc||isProcessing} className="w-full py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]"><Zap size={18}/>{t.btnScene}</button>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
+                                            <div className="p-4 bg-slate-800/50 rounded-full mb-4"><Upload className="w-8 h-8 text-indigo-400" /></div>
+                                            <p className="text-lg font-medium text-slate-300">{t.uploadTitle}</p>
+                                            <p className="text-sm mt-2 text-slate-500">{t.uploadDesc}</p>
+                                            <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={(e)=>handleFile(e.target.files[0])} />
+                                            <button onClick={()=>fileInputRef.current?.click()} className="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-lg transition-all active:scale-95">{t.selectFile}</button>
                                         </div>
                                     )}
-                                    <div className="mt-6 pt-6 border-t border-slate-800 flex gap-3">
-                                        <button onClick={()=>{if(!videoRef.current)return;const f=captureFrame(videoRef.current,videoRef.current.currentTime);setFrames(prev=>[f,...prev])}} disabled={!videoSrc} className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium flex items-center justify-center gap-2"><Camera size={16}/>{t.btnCurrent}</button>
-                                        <button onClick={extractLastFrame} disabled={!videoSrc} className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium flex items-center justify-center gap-2"><SkipForward size={16}/>{t.btnLast}</button>
-                                    </div>
+                                    {isProcessing && <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-30"><h3 className="text-white font-bold text-xl">{progress}%</h3><p className="text-indigo-300 mt-2 text-sm font-medium animate-pulse">{processStatus}</p></div>}
                                 </div>
-                            </div>
 
-                            {/* 二维码展示区 */}
-                            <div className="bg-slate-900 rounded-xl border border-slate-800 p-6 mt-8">
-                                <div className="flex items-center gap-2 mb-4 text-slate-400 text-sm font-medium uppercase tracking-wider justify-center md:justify-start"><QrCode size={16}/>{t.qrTitle}</div>
-                                <div className="flex flex-col md:flex-row gap-6 justify-center md:justify-start">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className="w-32 h-32 bg-white rounded-lg p-2 flex items-center justify-center border-2 border-indigo-500/20 shadow-lg"><img src="wechat.png" alt="QR 1" className="w-full h-full opacity-80" /></div>
-                                        <span className="text-xs text-slate-500 font-medium">{t.qrLabel1}</span>
+                                <div className="bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+                                    <div className="flex border-b border-slate-800">
+                                        <button onClick={()=>handleTabChange('interval')} className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${activeTab==='interval'?'text-indigo-400 bg-slate-800/30':'text-slate-400 hover:text-slate-200'}`}><Clock size={16}/>{t.tabInterval}{activeTab==='interval'&&<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500"/>}</button>
+                                        <button onClick={()=>handleTabChange('scene')} className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${activeTab==='scene'?'text-purple-400 bg-slate-800/30':'text-slate-400 hover:text-slate-200'}`}><Aperture size={16}/>{t.tabScene}{activeTab==='scene'&&<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"/>}</button>
                                     </div>
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className="w-32 h-32 bg-white rounded-lg p-2 flex items-center justify-center border-2 border-purple-500/20 shadow-lg"><img src="addme.jpg" alt="QR 2" className="w-full h-full opacity-80" /></div>
-                                        <span className="text-xs text-slate-500 font-medium">{t.qrLabel2}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="lg:col-span-5 flex flex-col h-[600px] lg:h-[calc(100vh-8rem)]">
-                            <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl flex flex-col h-full overflow-hidden">
-                                <div className="p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur z-10">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <div className="flex items-center gap-2"><ImageIcon className="w-4 h-4 text-indigo-400" /><span className="font-semibold text-sm">{t.results} ({frames.length})</span></div>
-                                        <div className="flex gap-2">
-                                            <button onClick={()=>{if(selectedFrameIds.size===frames.length)setSelectedFrameIds(new Set());else setSelectedFrameIds(new Set(frames.map(f=>f.id)))}} className="text-[10px] px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded text-slate-300">{selectedFrameIds.size===frames.length&&frames.length>0?t.deselect:t.selectAll}</button>
-                                            <button onClick={()=>{if(frames.length===0)return;showModal(t.modalConfirm,t.msgClearConfirm,'danger',()=>{setFrames([]);setSelectedFrameIds(new Set())})}} className="text-[10px] px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded transition-colors">{t.clearAll}</button>
+                                    <div className="p-6">
+                                        {activeTab === 'interval' ? (
+                                            <div className="space-y-6 animate-fade-in">
+                                                <div className="flex items-center justify-between p-4 bg-slate-950/50 rounded-xl border border-slate-800">
+                                                    <div className="space-y-1"><label className="text-sm font-medium text-slate-200">{t.intervalLabel}</label><p className="text-xs text-slate-500">{t.intervalDesc}</p></div>
+                                                    <div className="flex items-center gap-3"><input type="number" min="0.1" step="0.1" value={intervalSec} onChange={(e)=>setIntervalSec(e.target.value)} className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-center text-indigo-300 font-mono outline-none" /><span className="text-sm text-slate-500">{t.seconds}</span></div>
+                                                </div>
+                                                <button onClick={extractByInterval} disabled={!videoSrc||isProcessing} className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]"><Layers size={18}/>{t.btnInterval}</button>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-6 animate-fade-in">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-3"><div className="flex justify-between"><label className="text-sm font-medium text-slate-200">{t.sceneThreshold}</label><span className="text-xs font-mono text-purple-400">{sceneThreshold}%</span></div><input type="range" min="5" max="50" step="1" value={sceneThreshold} onChange={(e)=>setSceneThreshold(Number(e.target.value))} className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500" /><p className="text-xs text-slate-500">{t.sceneThresholdDesc}</p></div>
+                                                    <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-3"><div className="flex justify-between"><label className="text-sm font-medium text-slate-200">{t.minSceneDuration}</label><span className="text-xs font-mono text-purple-400">{minSceneDuration}s</span></div><input type="range" min="0.2" max="5" step="0.1" value={minSceneDuration} onChange={(e)=>setMinSceneDuration(Number(e.target.value))} className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500" /><p className="text-xs text-slate-500">{t.minSceneDurationDesc}</p></div>
+                                                </div>
+                                                <button onClick={detectSceneChanges} disabled={!videoSrc||isProcessing} className="w-full py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]"><Zap size={18}/>{t.btnScene}</button>
+                                            </div>
+                                        )}
+                                        <div className="mt-6 pt-6 border-t border-slate-800 flex gap-3">
+                                            <button onClick={()=>{if(!videoRef.current)return;const f=captureFrame(videoRef.current,videoRef.current.currentTime);setFrames(prev=>[f,...prev])}} disabled={!videoSrc} className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium flex items-center justify-center gap-2"><Camera size={16}/>{t.btnCurrent}</button>
+                                            <button onClick={extractLastFrame} disabled={!videoSrc} className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium flex items-center justify-center gap-2"><SkipForward size={16}/>{t.btnLast}</button>
                                         </div>
                                     </div>
-                                    {frames.length>0 && <button onClick={runBatchAIAnalysis} disabled={isProcessing} className="w-full mb-3 py-2 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 hover:border-emerald-500/60 text-emerald-300 text-xs font-bold rounded flex items-center justify-center gap-2 transition-all group"><Sparkles size={14} className="group-hover:text-emerald-200 group-hover:scale-110 transition-transform"/>{t.aiAnalyzeAll}</button>}
-                                    {selectedFrameIds.size>0 && <div className="flex gap-2 animate-fade-in"><button onClick={()=>{setFrames(frames.filter(f=>!selectedFrameIds.has(f.id)));setSelectedFrameIds(new Set())}} className="flex-1 py-1.5 bg-red-600 text-white text-xs rounded flex items-center justify-center gap-1"><Trash2 size={12}/>{t.deleteSelected} ({selectedFrameIds.size})</button></div>}
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar bg-slate-950/30">
-                                    {frames.length===0 ? (
-                                        <div className="h-full flex flex-col items-center justify-center text-slate-600 opacity-60"><Layers size={48} strokeWidth={1} className="mb-2"/><p className="text-sm">{t.noFrames}</p><p className="text-xs text-slate-700 mt-1">{t.noFramesDesc}</p></div>
-                                    ) : (
-                                        frames.map((frame) => (
-                                            <div key={frame.id} className={`flex bg-slate-900 border rounded-lg overflow-hidden transition-all hover:shadow-lg ${selectedFrameIds.has(frame.id)?'border-indigo-500 bg-indigo-900/10':'border-slate-800 hover:border-slate-700'}`}>
-                                                <div className="w-10 flex items-center justify-center cursor-pointer hover:bg-slate-800/50 border-r border-slate-800" onClick={()=>{const newSet=new Set(selectedFrameIds);if(newSet.has(frame.id))newSet.delete(frame.id);else newSet.add(frame.id);setSelectedFrameIds(newSet)}}>
-                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${selectedFrameIds.has(frame.id)?'bg-indigo-500 border-indigo-500':'border-slate-600'}`}>{selectedFrameIds.has(frame.id)&&<Check size={10} className="text-white"/>}</div>
-                                                </div>
-                                                <div className="w-32 h-24 bg-black relative shrink-0"><img src={frame.dataUrl} className="w-full h-full object-contain"/><div className="absolute bottom-1 right-1 bg-black/70 text-[10px] px-1 rounded text-white font-mono">{frame.time.toFixed(1)}s</div></div>
-                                                <div className="flex-1 p-2 flex flex-col justify-between min-w-0">
-                                                    <div className="flex justify-between items-start h-full"><textarea value={frame.description} onChange={(e)=>{setFrames(prev=>prev.map(f=>f.id===frame.id?{...f,description:e.target.value}:f))}} className="bg-transparent text-xs text-slate-300 border-none focus:ring-0 outline-none w-full h-full resize-none placeholder-slate-600 leading-relaxed" placeholder="Description..." /></div>
-                                                    <div className="flex items-end justify-between mt-1">
-                                                        <div className="flex gap-2">
-                                                            <div className="flex items-center gap-1 text-[10px] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded"><div className="w-2 h-2 rounded-full" style={{background:frame.meta.color}}></div>{t.dominantColor}</div>
-                                                            {frame.meta.diffScore&&<div className="flex items-center gap-1 text-[10px] text-purple-400 bg-purple-900/20 px-1.5 py-0.5 rounded"><Zap size={8}/>{t.changeScore}: {frame.meta.diffScore}%</div>}
+                                {/* 二维码展示区 */}
+                                <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-6 mt-8">
+                                    <div className="flex items-center gap-2 mb-4 text-slate-400 text-sm font-medium uppercase tracking-wider justify-center md:justify-start"><QrCode size={16}/>{t.qrTitle}</div>
+                                    <div className="flex flex-col md:flex-row gap-6 justify-center md:justify-start">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="w-32 h-32 bg-white rounded-lg p-2 flex items-center justify-center border-2 border-indigo-500/20 shadow-lg"><img src="wechat.png" alt="QR 1" className="w-full h-full opacity-80" /></div>
+                                            <span className="text-xs text-slate-500 font-medium">{t.qrLabel1}</span>
+                                        </div>
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="w-32 h-32 bg-white rounded-lg p-2 flex items-center justify-center border-2 border-purple-500/20 shadow-lg"><img src="addme.jpg" alt="QR 2" className="w-full h-full opacity-80" /></div>
+                                            <span className="text-xs text-slate-500 font-medium">{t.qrLabel2}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="lg:col-span-5 flex flex-col h-[600px] lg:h-[calc(100vh-8rem)]">
+                                <div className="bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-800 shadow-xl flex flex-col h-full overflow-hidden">
+                                    <div className="p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur z-10">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <div className="flex items-center gap-2"><ImageIcon className="w-4 h-4 text-indigo-400" /><span className="font-semibold text-sm">{t.results} ({frames.length})</span></div>
+                                            <div className="flex gap-2">
+                                                <button onClick={()=>{if(selectedFrameIds.size===frames.length)setSelectedFrameIds(new Set());else setSelectedFrameIds(new Set(frames.map(f=>f.id)))}} className="text-[10px] px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded text-slate-300">{selectedFrameIds.size===frames.length&&frames.length>0?t.deselect:t.selectAll}</button>
+                                                <button onClick={clearAllFrames} className="text-[10px] px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded transition-colors">{t.clearAll}</button>
+                                            </div>
+                                        </div>
+                                        {frames.length>0 && <button onClick={runBatchAIAnalysis} disabled={isProcessing} className="w-full mb-3 py-2 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 hover:border-emerald-500/60 text-emerald-300 text-xs font-bold rounded flex items-center justify-center gap-2 transition-all group"><Sparkles size={14} className="group-hover:text-emerald-200 group-hover:scale-110 transition-transform"/>{t.aiAnalyzeAll}</button>}
+                                        {selectedFrameIds.size>0 && <div className="flex gap-2 animate-fade-in"><button onClick={()=>{setFrames(frames.filter(f=>!selectedFrameIds.has(f.id)));setSelectedFrameIds(new Set())}} className="flex-1 py-1.5 bg-red-600 text-white text-xs rounded flex items-center justify-center gap-1"><Trash2 size={12}/>{t.deleteSelected} ({selectedFrameIds.size})</button></div>}
+                                    </div>
+
+                                    <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar bg-slate-950/30">
+                                        {frames.length===0 ? (
+                                            <div className="h-full flex flex-col items-center justify-center text-slate-600 opacity-60"><Layers size={48} strokeWidth={1} className="mb-2"/><p className="text-sm">{t.noFrames}</p><p className="text-xs text-slate-700 mt-1">{t.noFramesDesc}</p></div>
+                                        ) : (
+                                            frames.map((frame) => (
+                                                <div key={frame.id} className={`flex bg-slate-900 border rounded-lg overflow-hidden transition-all hover:shadow-lg ${selectedFrameIds.has(frame.id)?'border-indigo-500 bg-indigo-900/10':'border-slate-800 hover:border-slate-700'}`}>
+                                                    <div className="w-10 flex items-center justify-center cursor-pointer hover:bg-slate-800/50 border-r border-slate-800" onClick={()=>{const newSet=new Set(selectedFrameIds);if(newSet.has(frame.id))newSet.delete(frame.id);else newSet.add(frame.id);setSelectedFrameIds(newSet)}}>
+                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${selectedFrameIds.has(frame.id)?'bg-indigo-500 border-indigo-500':'border-slate-600'}`}>{selectedFrameIds.has(frame.id)&&<Check size={10} className="text-white"/>}</div>
+                                                    </div>
+                                                    <div className="w-32 h-24 bg-black relative shrink-0"><img src={frame.dataUrl} className="w-full h-full object-contain"/><div className="absolute bottom-1 right-1 bg-black/70 text-[10px] px-1 rounded text-white font-mono">{frame.time.toFixed(1)}s</div></div>
+                                                    <div className="flex-1 p-2 flex flex-col justify-between min-w-0">
+                                                        <div className="flex justify-between items-start h-full"><textarea value={frame.description} onChange={(e)=>{setFrames(prev=>prev.map(f=>f.id===frame.id?{...f,description:e.target.value}:f))}} className="bg-transparent text-xs text-slate-300 border-none focus:ring-0 outline-none w-full h-full resize-none placeholder-slate-600 leading-relaxed" placeholder="Description..." /></div>
+                                                        <div className="flex items-end justify-between mt-1">
+                                                            <div className="flex gap-2">
+                                                                <div className="flex items-center gap-1 text-[10px] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded"><div className="w-2 h-2 rounded-full" style={{background:frame.meta.color}}></div>{t.dominantColor}</div>
+                                                                {frame.meta.diffScore&&<div className="flex items-center gap-1 text-[10px] text-purple-400 bg-purple-900/20 px-1.5 py-0.5 rounded"><Zap size={8}/>{t.changeScore}: {frame.meta.diffScore}%</div>}
+                                                            </div>
+                                                            <a href={frame.dataUrl} download={`frame_${frame.time}.jpg`} className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition-colors"><Download size={14}/></a>
                                                         </div>
-                                                        <a href={frame.dataUrl} download={`frame_${frame.time}.jpg`} className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition-colors"><Download size={14}/></a>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))
-                                    )}
+                                            ))
+                                        )}
+                                    </div>
+                                    <div className="p-4 border-t border-slate-800 bg-slate-900 space-y-3">
+                                        <button onClick={downloadStoryboard} disabled={frames.length===0} className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition-all disabled:opacity-50"><FileSpreadsheet size={18}/>{t.downloadXlsx}</button>
+                                        <button onClick={downloadZip} disabled={frames.length===0} className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"><FileVideo size={18}/>{t.downloadZip}</button>
+                                    </div>
                                 </div>
-                                <div className="p-4 border-t border-slate-800 bg-slate-900"><button onClick={downloadZip} disabled={frames.length===0} className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"><FileVideo size={18}/>{t.downloadZip} ({frames.length})</button></div>
                             </div>
-                        </div>
-                    </main>
+                        </main>
+                    </div>
                 </div>
             );
         };
