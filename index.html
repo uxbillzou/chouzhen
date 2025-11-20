@@ -11,6 +11,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <!-- 引入 ExcelJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <!-- 引入 Markdown 解析器 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -41,7 +43,8 @@
         import { 
             Upload, Image as ImageIcon, Film, Clock, Layers, Check, Play, Pause, 
             SkipForward, Camera, FileVideo, Aperture, Zap, Download, Trash2, 
-            Sparkles, Globe, Languages, QrCode, X, Settings, Key, RotateCcw, FileSpreadsheet
+            Sparkles, Globe, Languages, QrCode, X, Settings, Key, RotateCcw, FileSpreadsheet,
+            Crown, Lock, CreditCard, Copy, AlertCircle
         } from 'https://esm.sh/lucide-react@0.263.1';
 
         const TRANSLATIONS = {
@@ -105,7 +108,8 @@
                 apiKeyHelp: "您的密钥仅存储在本地浏览器中，不会上传到任何服务器。",
                 apiKeyTip: "找不到Key？赞赏作者8.8，然后凭截图添加作者，即可获得",
                 save: "保存",
-                noKeyError: "请先在设置中配置 API Key 才能使用 AI 功能"
+                noKeyError: "请先在设置中配置 API Key 才能使用 AI 功能",
+                cancelOp: "停止运行"
             },
             en: {
                 title: "SmartFrame Pro",
@@ -166,7 +170,8 @@
                 apiKeyPlaceholder: "Paste your API Key here (starts with AIza)",
                 apiKeyHelp: "Your key is stored locally in your browser and never sent to our servers.",
                 save: "Save",
-                noKeyError: "Please configure API Key in settings first"
+                noKeyError: "Please configure API Key in settings first",
+                cancelOp: "Stop"
             }
         };
 
@@ -174,18 +179,9 @@
         const loadScript = (src) => new Promise((resolve, reject) => { if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; } const script = document.createElement('script'); script.src = src; script.onload = resolve; script.onerror = reject; document.head.appendChild(script); });
         const calculateFrameDifference = (d1, d2) => { let diff = 0; const len = d1.length; for (let i = 0; i < len; i += 4) { diff += Math.abs(d1[i] - d2[i]) + Math.abs(d1[i + 1] - d2[i + 1]) + Math.abs(d1[i + 2] - d2[i + 2]); } return (diff / (len / 4 * 3 * 255)) * 100; };
         const getDominantColor = (ctx, w, h) => { try { const d = ctx.getImageData(0,0,w,h).data; let r=0,g=0,b=0,c=d.length/4; for(let i=0;i<d.length;i+=40){r+=d[i];g+=d[i+1];b+=d[i+2];} const s=Math.ceil(c/10); return `rgb(${Math.floor(r/s)},${Math.floor(g/s)},${Math.floor(b/s)})`; } catch{return '#000'} };
-        
-        // Base64 转 ArrayBuffer 辅助函数
-        const base64ToUint8Array = (base64) => {
-            const binaryString = window.atob(base64);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes.buffer;
-        };
+        const base64ToUint8Array = (base64) => { const binaryString = window.atob(base64); const len = binaryString.length; const bytes = new Uint8Array(len); for (let i = 0; i < len; i++) { bytes[i] = binaryString.charCodeAt(i); } return bytes.buffer; };
 
+        // Gemini API Calls (Text Analysis)
         const analyzeImageWithGemini = async (base64Data, prompt, apiKey) => {
             if (!apiKey) return "";
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
@@ -271,10 +267,7 @@
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 fade-in">
                     <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden slide-in">
                         <div className="p-6 space-y-4">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-xl font-bold text-white flex items-center gap-2"><Settings className="w-5 h-5 text-indigo-400" /> {t.settingsTitle}</h3>
-                                <button onClick={onClose} className="text-slate-500 hover:text-white"><X size={20} /></button>
-                            </div>
+                            <div className="flex justify-between items-center"><h3 className="text-xl font-bold text-white flex items-center gap-2"><Settings className="w-5 h-5 text-indigo-400" /> {t.settingsTitle}</h3><button onClick={onClose} className="text-slate-500 hover:text-white"><X size={20} /></button></div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Key size={14} /> {t.apiKeyLabel}</label>
                                 <input type="password" value={tempKey} onChange={(e) => setTempKey(e.target.value)} placeholder={t.apiKeyPlaceholder} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none" />
@@ -315,6 +308,7 @@
             const canvasRef = useRef(null);
             const processingCanvasRef = useRef(null);
             const fileInputRef = useRef(null);
+            const cancelRef = useRef(false);
 
             useEffect(() => { const loader = document.getElementById('loading-screen'); if (loader) loader.style.display = 'none'; }, []);
 
@@ -328,257 +322,44 @@
                 }));
             }, [lang, t]);
 
-            const showModal = (config) => {
-                setModalConfig({ 
-                    isOpen: true, 
-                    title: config.title || '', 
-                    message: config.message || '', 
-                    type: config.type || 'alert', 
-                    onConfirm: () => { if(config.onConfirm) config.onConfirm(); closeModal(); }, 
-                    onCancel: closeModal,
-                    customButtons: config.customButtons || null
-                });
-            };
+            const showModal = (config) => { setModalConfig({ isOpen: true, title: config.title || '', message: config.message || '', type: config.type || 'alert', onConfirm: () => { if(config.onConfirm) config.onConfirm(); closeModal(); }, onCancel: closeModal, customButtons: config.customButtons || null }); };
             const closeModal = () => setModalConfig(prev => ({ ...prev, isOpen: false }));
+            const cancelProcessing = () => { cancelRef.current = true; };
 
-            const handleFile = (file) => {
-                if (file && file.type.startsWith('video/')) {
-                    if (videoSrc) URL.revokeObjectURL(videoSrc);
-                    setVideoFile(file);
-                    setVideoSrc(URL.createObjectURL(file));
-                    setFrames([]);
-                    setSelectedFrameIds(new Set());
-                    setIsPlaying(false);
-                } else { showModal({title: t.modalError, message: t.msgFileError, type: 'alert'}); }
-            };
+            const handleFile = (file) => { if (file && file.type.startsWith('video/')) { if (videoSrc) URL.revokeObjectURL(videoSrc); setVideoFile(file); setVideoSrc(URL.createObjectURL(file)); setFrames([]); setSelectedFrameIds(new Set()); setIsPlaying(false); } else { showModal({title: t.modalError, message: t.msgFileError, type: 'alert'}); } };
+            const handleRemoveVideo = () => { showModal({ title: t.modalConfirm, message: t.msgRemoveVideoConfirm, type: 'danger', onConfirm: () => { if (videoSrc) URL.revokeObjectURL(videoSrc); setVideoFile(null); setVideoSrc(null); setFrames([]); setSelectedFrameIds(new Set()); setIsPlaying(false); setCurrentTime(0); setDuration(0); }}); };
+            const handleTabChange = (targetTab) => { if (activeTab === targetTab) return; if (frames.length > 0 && (targetTab === 'interval' || targetTab === 'scene')) { setActiveTab(targetTab); } else { setActiveTab(targetTab); } };
+            const captureFrame = (video, time, meta = {}) => { const canvas = canvasRef.current; const ctx = canvas.getContext('2d'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0, canvas.width, canvas.height); const color = getDominantColor(ctx, canvas.width, canvas.height); return { id: Date.now() + Math.random(), dataUrl: canvas.toDataURL('image/jpeg', 0.85), time: time, width: canvas.width, height: canvas.height, description: `${t.timePoint}: ${time.toFixed(2)}s`, meta: { color, ...meta } }; };
+            const extractLastFrame = async () => { if (!videoRef.current) return; setIsProcessing(true); const video = videoRef.current; const originalTime = video.currentTime; const wasPlaying = !video.paused; if(wasPlaying) video.pause(); try { const targetTime = Math.max(0, video.duration - 0.1); video.currentTime = targetTime; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); }); const frame = captureFrame(video, targetTime); setFrames(prev => [frame, ...prev]); } catch (e) { showModal({title: t.modalError, message: "截取失败", type: 'alert'}); } finally { video.currentTime = originalTime; setIsProcessing(false); if(wasPlaying) video.play(); } };
+            const detectSceneChanges = async () => { if (!videoRef.current) return; cancelRef.current = false; setIsProcessing(true); setProcessStatus(t.analyzing); const video = videoRef.current; video.pause(); const newFrames = []; let lastSavedTime = -minSceneDuration; let prevImageData = null; const diffCtx = processingCanvasRef.current.getContext('2d', { willReadFrequently: true }); processingCanvasRef.current.width = 64; processingCanvasRef.current.height = 64; const step = 0.2; let currentTimeCursor = 0; const totalDuration = video.duration; try { video.currentTime = 0; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); }); diffCtx.drawImage(video, 0, 0, 64, 64); prevImageData = diffCtx.getImageData(0, 0, 64, 64).data; newFrames.push(captureFrame(video, 0, { diffScore: 100 })); lastSavedTime = 0; currentTimeCursor += step; while (currentTimeCursor < totalDuration) { if (cancelRef.current) break; setProgress(Math.round((currentTimeCursor / totalDuration) * 100)); video.currentTime = currentTimeCursor; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); }); diffCtx.drawImage(video, 0, 0, 64, 64); const currentImageData = diffCtx.getImageData(0, 0, 64, 64).data; const diff = calculateFrameDifference(prevImageData, currentImageData); if (diff > sceneThreshold && (currentTimeCursor - lastSavedTime) >= minSceneDuration) { newFrames.push(captureFrame(video, currentTimeCursor, { diffScore: diff.toFixed(1) })); lastSavedTime = currentTimeCursor; } prevImageData = currentImageData; currentTimeCursor += step; } setFrames(prev => [...prev, ...newFrames]); if (!cancelRef.current) showModal({title: t.modalSuccess, message: `${t.results}: ${newFrames.length}`, type: 'success'}); } catch (e) { console.error(e); showModal({title: t.modalError, message: e.message, type: 'alert'}); } finally { setIsProcessing(false); setProgress(0); setProcessStatus(''); video.currentTime = 0; } };
+            const extractByInterval = async () => { if (!videoRef.current || intervalSec <= 0) return; cancelRef.current = false; setIsProcessing(true); setProcessStatus(t.intervalExtract); const video = videoRef.current; video.pause(); const newFrames = []; let currentTimeCursor = 0; const totalDuration = video.duration; try { while (currentTimeCursor <= totalDuration) { if (cancelRef.current) break; setProgress(Math.round((currentTimeCursor / totalDuration) * 100)); video.currentTime = currentTimeCursor; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); }); newFrames.push(captureFrame(video, currentTimeCursor)); currentTimeCursor += parseFloat(intervalSec); } setFrames(prev => [...prev, ...newFrames]); if (!cancelRef.current) showModal({title: t.modalSuccess, message: `${t.results}: ${newFrames.length}`, type: 'success'}); } catch (e) { console.error(e); } finally { setIsProcessing(false); setProgress(0); setProcessStatus(''); video.currentTime = 0; } };
+            const runBatchAIAnalysis = async () => { if (frames.length === 0) return; if (!apiKey) { setShowSettings(true); setTimeout(() => alert(t.noKeyError), 100); return; } cancelRef.current = false; setIsProcessing(true); setProcessStatus(t.aiAnalyzing); let completed = 0; for (let i = 0; i < frames.length; i++) { if (cancelRef.current) break; try { if (i > 0) await new Promise(r => setTimeout(r, 800)); const desc = await analyzeImageWithGemini(frames[i].dataUrl.split(',')[1], t.aiPrompt, apiKey); if (desc) setFrames(prev => { const next = [...prev]; if(next[i]) next[i].description = desc.trim(); return next; }); } catch (e) { console.error(e); } completed++; setProgress(Math.round((completed / frames.length) * 100)); } setIsProcessing(false); setProgress(0); if (!cancelRef.current) showModal({title: t.modalSuccess, message: t.msgAiComplete, type: 'success'}); };
 
-            const handleRemoveVideo = () => {
-                showModal({
-                    title: t.modalConfirm,
-                    message: t.msgRemoveVideoConfirm,
-                    type: 'danger',
-                    onConfirm: () => {
-                        if (videoSrc) URL.revokeObjectURL(videoSrc);
-                        setVideoFile(null);
-                        setVideoSrc(null);
-                        setFrames([]);
-                        setSelectedFrameIds(new Set());
-                        setIsPlaying(false);
-                        setCurrentTime(0);
-                        setDuration(0);
-                    }
-                });
-            };
-
-            const handleTabChange = (targetTab) => {
-                if (activeTab === targetTab) return;
-                if (frames.length > 0) {
-                    showModal({
-                        title: t.modalConfirm,
-                        message: t.msgSwitchClear,
-                        type: 'switch',
-                        customButtons: [
-                            {
-                                label: t.keepAndSwitch,
-                                className: "bg-slate-700 hover:bg-slate-600 text-white",
-                                onClick: () => { setActiveTab(targetTab); closeModal(); }
-                            },
-                            {
-                                label: t.clearAndSwitch,
-                                className: "bg-indigo-600 hover:bg-indigo-500 text-white",
-                                onClick: () => { 
-                                    setFrames([]); 
-                                    setSelectedFrameIds(new Set()); 
-                                    setActiveTab(targetTab); 
-                                    closeModal(); 
-                                }
-                            }
-                        ]
-                    });
-                } else {
-                    setActiveTab(targetTab);
-                }
-            };
-
-            const captureFrame = (video, time, meta = {}) => {
-                const canvas = canvasRef.current; const ctx = canvas.getContext('2d');
-                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const color = getDominantColor(ctx, canvas.width, canvas.height);
-                return { id: Date.now() + Math.random(), dataUrl: canvas.toDataURL('image/jpeg', 0.85), time: time, width: canvas.width, height: canvas.height, description: `${t.timePoint}: ${time.toFixed(2)}s`, meta: { color, ...meta } };
-            };
-
-            const extractLastFrame = async () => {
-                if (!videoRef.current) return;
-                setIsProcessing(true);
-                const video = videoRef.current; const originalTime = video.currentTime; const wasPlaying = !video.paused; if(wasPlaying) video.pause();
-                try {
-                    const targetTime = Math.max(0, video.duration - 0.1);
-                    video.currentTime = targetTime;
-                    await new Promise(r => { video.addEventListener('seeked', r, { once: true }); });
-                    const frame = captureFrame(video, targetTime);
-                    setFrames(prev => [frame, ...prev]);
-                } catch (e) { showModal({title: t.modalError, message: "截取失败", type: 'alert'}); } 
-                finally { video.currentTime = originalTime; setIsProcessing(false); if(wasPlaying) video.play(); }
-            };
-
-            const detectSceneChanges = async () => {
-                if (!videoRef.current) return;
-                setIsProcessing(true); setProcessStatus(t.analyzing);
-                const video = videoRef.current; video.pause();
-                const newFrames = []; let lastSavedTime = -minSceneDuration; let prevImageData = null;
-                const diffCtx = processingCanvasRef.current.getContext('2d', { willReadFrequently: true });
-                processingCanvasRef.current.width = 64; processingCanvasRef.current.height = 64; const step = 0.2; let currentTimeCursor = 0; const totalDuration = video.duration;
-                try {
-                    video.currentTime = 0; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); });
-                    diffCtx.drawImage(video, 0, 0, 64, 64); prevImageData = diffCtx.getImageData(0, 0, 64, 64).data;
-                    newFrames.push(captureFrame(video, 0, { diffScore: 100 })); lastSavedTime = 0; currentTimeCursor += step;
-                    while (currentTimeCursor < totalDuration) {
-                        setProgress(Math.round((currentTimeCursor / totalDuration) * 100));
-                        video.currentTime = currentTimeCursor; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); });
-                        diffCtx.drawImage(video, 0, 0, 64, 64); const currentImageData = diffCtx.getImageData(0, 0, 64, 64).data;
-                        const diff = calculateFrameDifference(prevImageData, currentImageData);
-                        if (diff > sceneThreshold && (currentTimeCursor - lastSavedTime) >= minSceneDuration) {
-                            newFrames.push(captureFrame(video, currentTimeCursor, { diffScore: diff.toFixed(1) })); lastSavedTime = currentTimeCursor;
-                        }
-                        prevImageData = currentImageData; currentTimeCursor += step;
-                    }
-                    setFrames(prev => [...prev, ...newFrames]); showModal({title: t.modalSuccess, message: `${t.results}: ${newFrames.length}`, type: 'success'});
-                } catch (e) { console.error(e); showModal({title: t.modalError, message: e.message, type: 'alert'}); } 
-                finally { setIsProcessing(false); setProgress(0); setProcessStatus(''); video.currentTime = 0; }
-            };
-
-            const extractByInterval = async () => {
-                if (!videoRef.current || intervalSec <= 0) return;
-                setIsProcessing(true); setProcessStatus(t.intervalExtract);
-                const video = videoRef.current; video.pause();
-                const newFrames = []; let currentTimeCursor = 0; const totalDuration = video.duration;
-                try {
-                    while (currentTimeCursor <= totalDuration) {
-                        setProgress(Math.round((currentTimeCursor / totalDuration) * 100));
-                        video.currentTime = currentTimeCursor; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); });
-                        newFrames.push(captureFrame(video, currentTimeCursor)); currentTimeCursor += parseFloat(intervalSec);
-                    }
-                    setFrames(prev => [...prev, ...newFrames]); showModal({title: t.modalSuccess, message: `${t.results}: ${newFrames.length}`, type: 'success'});
-                } catch (e) { console.error(e); } 
-                finally { setIsProcessing(false); setProgress(0); setProcessStatus(''); video.currentTime = 0; }
-            };
-
-            const runBatchAIAnalysis = async () => {
-                if (frames.length === 0) return;
-                
-                if (!apiKey) {
-                    setShowSettings(true);
-                    setTimeout(() => alert(t.noKeyError), 100);
-                    return;
-                }
-
-                setIsProcessing(true); setProcessStatus(t.aiAnalyzing); let completed = 0;
-                for (let i = 0; i < frames.length; i++) {
-                    try {
-                        if (i > 0) await new Promise(r => setTimeout(r, 800));
-                        const desc = await analyzeImageWithGemini(frames[i].dataUrl.split(',')[1], t.aiPrompt, apiKey);
-                        if (desc) setFrames(prev => { const next = [...prev]; if(next[i]) next[i].description = desc.trim(); return next; });
-                    } catch (e) { console.error(e); }
-                    completed++; setProgress(Math.round((completed / frames.length) * 100));
-                }
-                setIsProcessing(false); setProgress(0); showModal({title: t.modalSuccess, message: t.msgAiComplete, type: 'success'});
-            };
-
-            const clearAllFrames = () => {
-                if (frames.length === 0) return;
-                showModal({title: t.modalConfirm, message: t.msgClearConfirm, type: 'danger', onConfirm: () => { setFrames([]); setSelectedFrameIds(new Set()); }});
-            };
-
-            const downloadZip = () => {
-                if (!window.JSZip) return showModal({title: t.modalError, message: t.librariesLoading, type: 'alert'});
-                const zip = new window.JSZip(); const folder = zip.folder("extracted_frames");
-                frames.forEach((frame, index) => {
-                    const safeDesc = frame.description.replace(/[^a-z0-9\u4e00-\u9fa5]/gi, '_').substring(0, 30);
-                    folder.file(`frame_${index}_${frame.time.toFixed(2)}s_${safeDesc}.jpg`, frame.dataUrl.split(',')[1], { base64: true });
-                });
-                zip.generateAsync({ type: "blob" }).then(content => window.saveAs(content, "frames.zip"));
-            };
-
-            // 使用 ExcelJS 导出带图片的分镜表，自动保持图片比例
+            const clearAllFrames = () => { if (frames.length === 0) return; showModal({title: t.modalConfirm, message: t.msgClearConfirm, type: 'danger', onConfirm: () => { setFrames([]); setSelectedFrameIds(new Set()); }}); };
+            const downloadZip = () => { if (!window.JSZip) return showModal({title: t.modalError, message: t.librariesLoading, type: 'alert'}); const zip = new window.JSZip(); const folder = zip.folder("extracted_frames"); frames.forEach((frame, index) => { const safeDesc = frame.description.replace(/[^a-z0-9\u4e00-\u9fa5]/gi, '_').substring(0, 30); folder.file(`frame_${index}_${frame.time.toFixed(2)}s_${safeDesc}.jpg`, frame.dataUrl.split(',')[1], { base64: true }); }); zip.generateAsync({ type: "blob" }).then(content => window.saveAs(content, "frames.zip")); };
             const downloadStoryboard = async () => {
                 if (!window.ExcelJS) return showModal({title: t.modalError, message: t.librariesLoading, type: 'alert'});
-                
-                const workbook = new ExcelJS.Workbook();
-                const worksheet = workbook.addWorksheet('Storyboard');
-
-                worksheet.columns = [
-                    { header: '编号', key: 'no', width: 8 },
-                    { header: '景别', key: 'shot', width: 15 },
-                    { header: '运镜', key: 'movement', width: 15 },
-                    { header: '画面', key: 'image', width: 32 }, 
-                    { header: '镜头分析', key: 'analysis', width: 50 }
-                ];
-
+                const workbook = new ExcelJS.Workbook(); const worksheet = workbook.addWorksheet('Storyboard');
+                worksheet.columns = [ { header: '编号', key: 'no', width: 8 }, { header: '景别', key: 'shot', width: 15 }, { header: '运镜', key: 'movement', width: 15 }, { header: '画面', key: 'image', width: 32 }, { header: '镜头分析', key: 'analysis', width: 50 } ];
                 for (let i = 0; i < frames.length; i++) {
-                    const frame = frames[i];
-                    
-                    let shot = "", movement = "", analysis = "";
-                    const shotMatch = frame.description.match(/【景别[：:]\s*(.*?)】/) || frame.description.match(/\[Shot[：:]\s*(.*?)\]/i);
-                    const moveMatch = frame.description.match(/【运镜[：:]\s*(.*?)】/) || frame.description.match(/\[Movement[：:]\s*(.*?)\]/i);
-                    const analysisMatch = frame.description.match(/【镜头分析[：:]\s*(.*?)】/) || frame.description.match(/\[Analysis[：:]\s*(.*?)\]/i);
-                    if(shotMatch) shot = shotMatch[1]; 
-                    if(moveMatch) movement = moveMatch[1]; 
-                    if(analysisMatch) analysis = analysisMatch[1]; 
-                    else analysis = frame.description.replace(/【.*?】|\[.*?\]/g, '').trim();
-
-                    const row = worksheet.addRow({
-                        no: i + 1,
-                        shot: shot || "-",
-                        movement: movement || "-",
-                        image: '', 
-                        analysis: analysis || frame.description
-                    });
-
-                    row.height = 90; 
-
-                    row.eachCell({ includeEmpty: true }, (cell) => {
-                        cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
-                        if(cell.col === 1 || cell.col === 2 || cell.col === 3) cell.alignment.horizontal = 'center'; 
-                    });
-
-                    const base64Data = frame.dataUrl.split(',')[1];
-                    const imageId = workbook.addImage({
-                        buffer: base64ToUint8Array(base64Data),
-                        extension: 'jpeg',
-                    });
-
-                    // 计算图片在单元格中的显示尺寸，保持比例
-                    const aspectRatio = frame.width / frame.height;
-                    const displayHeight = 100; 
-                    const displayWidth = displayHeight * aspectRatio;
-
-                    worksheet.addImage(imageId, {
-                        tl: { col: 3.1, row: i + 1.1 }, 
-                        ext: { width: displayWidth, height: displayHeight },
-                        editAs: 'oneCell' 
-                    });
+                    const frame = frames[i]; let shot = "", movement = "", analysis = "";
+                    const shotMatch = frame.description.match(/【景别[：:]\s*(.*?)】/) || frame.description.match(/\[Shot[：:]\s*(.*?)\]/i); const moveMatch = frame.description.match(/【运镜[：:]\s*(.*?)】/) || frame.description.match(/\[Movement[：:]\s*(.*?)\]/i); const analysisMatch = frame.description.match(/【镜头分析[：:]\s*(.*?)】/) || frame.description.match(/\[Analysis[：:]\s*(.*?)\]/i);
+                    if(shotMatch) shot = shotMatch[1]; if(moveMatch) movement = moveMatch[1]; if(analysisMatch) analysis = analysisMatch[1]; else analysis = frame.description.replace(/【.*?】|\[.*?\]/g, '').trim();
+                    const row = worksheet.addRow({ no: i + 1, shot: shot || "-", movement: movement || "-", image: '', analysis: analysis || frame.description }); row.height = 90;
+                    row.eachCell({ includeEmpty: true }, (cell) => { cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true }; if(cell.col === 1 || cell.col === 2 || cell.col === 3) cell.alignment.horizontal = 'center'; });
+                    const base64Data = frame.dataUrl.split(',')[1]; const imageId = workbook.addImage({ buffer: base64ToUint8Array(base64Data), extension: 'jpeg', });
+                    const aspectRatio = frame.width / frame.height; const displayHeight = 100; const displayWidth = displayHeight * aspectRatio;
+                    worksheet.addImage(imageId, { tl: { col: 3.1, row: i + 1.1 }, ext: { width: displayWidth, height: displayHeight }, editAs: 'oneCell' });
                 }
-
-                const headerRow = worksheet.getRow(1);
-                headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
-                headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
-                headerRow.height = 30;
-                headerRow.eachCell((cell) => {
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } };
-                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-                });
-
-                const buffer = await workbook.xlsx.writeBuffer();
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                window.saveAs(blob, "storyboard_分镜表.xlsx");
+                const headerRow = worksheet.getRow(1); headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 }; headerRow.alignment = { vertical: 'middle', horizontal: 'center' }; headerRow.height = 30; headerRow.eachCell((cell) => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } }; cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} }; });
+                const buffer = await workbook.xlsx.writeBuffer(); const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }); window.saveAs(blob, "storyboard_分镜表.xlsx");
             };
+            const copyToClipboard = (text) => { navigator.clipboard.writeText(text).then(() => alert(t.copySuccess)); };
 
             return (
                 <div className="min-h-screen text-slate-200 font-sans selection:bg-indigo-500/30 pb-20 relative overflow-hidden">
                     <Modal {...modalConfig} texts={{ cancel: t.cancel, confirm: t.confirm }} />
                     <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} apiKey={apiKey} setApiKey={setApiKey} t={t} />
-                    
                     <canvas ref={canvasRef} className="hidden-canvas" />
                     <canvas ref={processingCanvasRef} className="hidden-canvas" />
                     <TechBackground />
@@ -586,22 +367,13 @@
                     <div className="relative z-10">
                         <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-40">
                             <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="bg-indigo-500 p-1.5 rounded-lg shadow-indigo-500/20 shadow-lg"><Film className="w-6 h-6 text-white" /></div>
-                                    <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent hidden sm:block">{t.title}</h1>
-                                </div>
+                                <div className="flex items-center gap-2"><div className="bg-indigo-500 p-1.5 rounded-lg shadow-indigo-500/20 shadow-lg"><Film className="w-6 h-6 text-white" /></div><h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent hidden sm:block">{t.title}</h1></div>
                                 <div className="flex items-center gap-4">
-                                    {/* Removed Free Quota Display */}
-                                    
                                     <button onClick={() => setShowSettings(true)} className={`p-2 rounded-lg transition-all ${apiKey ? 'text-slate-400 hover:text-indigo-400' : 'text-amber-400 animate-pulse hover:text-amber-300'}`} title={t.settingsTitle}><Settings size={20} /></button>
-                                    <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
-                                        <button onClick={() => setLang('zh')} className={`px-2 py-1 text-xs font-medium rounded-md ${lang === 'zh' ? 'bg-slate-600 text-white' : 'text-slate-400'}`}>中文</button>
-                                        <button onClick={() => setLang('en')} className={`px-2 py-1 text-xs font-medium rounded-md ${lang === 'en' ? 'bg-slate-600 text-white' : 'text-slate-400'}`}>EN</button>
-                                    </div>
+                                    <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700"><button onClick={() => setLang('zh')} className={`px-2 py-1 text-xs font-medium rounded-md ${lang === 'zh' ? 'bg-slate-600 text-white' : 'text-slate-400'}`}>中文</button><button onClick={() => setLang('en')} className={`px-2 py-1 text-xs font-medium rounded-md ${lang === 'en' ? 'bg-slate-600 text-white' : 'text-slate-400'}`}>EN</button></div>
                                 </div>
                             </div>
                         </header>
-
                         <main className="max-w-7xl mx-auto px-4 py-8 grid lg:grid-cols-12 gap-8">
                             <div className="lg:col-span-7 space-y-6">
                                 <div className={`relative group aspect-video bg-slate-900/80 backdrop-blur-sm rounded-2xl border-2 border-dashed overflow-hidden transition-all shadow-2xl ${dragActive ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800'} ${videoSrc ? 'border-none bg-black' : ''}`}
@@ -610,21 +382,12 @@
                                         <>
                                             <video ref={videoRef} src={videoSrc} className="w-full h-full object-contain" onTimeUpdate={()=>setCurrentTime(videoRef.current?.currentTime||0)} onLoadedMetadata={()=>setDuration(videoRef.current?.duration||0)} onClick={()=>{if(videoRef.current?.paused){videoRef.current.play();setIsPlaying(true)}else{videoRef.current?.pause();setIsPlaying(false)}}} />
                                             <button onClick={(e) => { e.stopPropagation(); handleRemoveVideo(); }} className="absolute top-4 right-4 p-2 bg-black/60 hover:bg-red-600/80 text-white rounded-full transition-all z-20 opacity-0 group-hover:opacity-100" title="移除视频"><X size={20} /></button>
-                                            <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-4">
-                                                <button onClick={()=>{if(videoRef.current?.paused){videoRef.current.play();setIsPlaying(true)}else{videoRef.current?.pause();setIsPlaying(false)}}} className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur rounded-full text-white">{isPlaying ? <Pause size={20}/> : <Play size={20}/>}</button>
-                                                <div className="flex-1 flex flex-col gap-1"><input type="range" min="0" max={duration||100} value={currentTime} onChange={(e)=>{const val=Number(e.target.value);if(videoRef.current)videoRef.current.currentTime=val;setCurrentTime(val)}} className="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-500" /></div>
-                                            </div>
+                                            <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-4"><button onClick={()=>{if(videoRef.current?.paused){videoRef.current.play();setIsPlaying(true)}else{videoRef.current?.pause();setIsPlaying(false)}}} className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur rounded-full text-white">{isPlaying ? <Pause size={20}/> : <Play size={20}/>}</button><div className="flex-1 flex flex-col gap-1"><input type="range" min="0" max={duration||100} value={currentTime} onChange={(e)=>{const val=Number(e.target.value);if(videoRef.current)videoRef.current.currentTime=val;setCurrentTime(val)}} className="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-500" /></div></div>
                                         </>
                                     ) : (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
-                                            <div className="p-4 bg-slate-800/50 rounded-full mb-4"><Upload className="w-8 h-8 text-indigo-400" /></div>
-                                            <p className="text-lg font-medium text-slate-300">{t.uploadTitle}</p>
-                                            <p className="text-sm mt-2 text-slate-500">{t.uploadDesc}</p>
-                                            <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={(e)=>handleFile(e.target.files[0])} />
-                                            <button onClick={()=>fileInputRef.current?.click()} className="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-lg transition-all active:scale-95">{t.selectFile}</button>
-                                        </div>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500"><div className="p-4 bg-slate-800/50 rounded-full mb-4"><Upload className="w-8 h-8 text-indigo-400" /></div><p className="text-lg font-medium text-slate-300">{t.uploadTitle}</p><p className="text-sm mt-2 text-slate-500">{t.uploadDesc}</p><input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={(e)=>handleFile(e.target.files[0])} /><button onClick={()=>fileInputRef.current?.click()} className="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-lg transition-all active:scale-95">{t.selectFile}</button></div>
                                     )}
-                                    {isProcessing && <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-30"><h3 className="text-white font-bold text-xl">{progress}%</h3><p className="text-indigo-300 mt-2 text-sm font-medium animate-pulse">{processStatus}</p></div>}
+                                    {isProcessing && <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-30 animate-in fade-in"><div className="relative w-16 h-16 mb-6"><div className="absolute inset-0 border-4 border-slate-700 rounded-full"></div><div className="absolute inset-0 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div><h3 className="text-white font-bold text-xl tracking-wide">{progress ? `${progress}%` : ''}</h3><p className="text-indigo-300 mt-2 text-sm font-medium animate-pulse">{processStatus}</p><button onClick={cancelProcessing} className="mt-6 px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-full transition-colors border border-slate-600">{t.cancelOp}</button></div>}
                                 </div>
 
                                 <div className="bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
@@ -633,18 +396,19 @@
                                         <button onClick={()=>handleTabChange('scene')} className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${activeTab==='scene'?'text-purple-400 bg-slate-800/30':'text-slate-400 hover:text-slate-200'}`}><Aperture size={16}/>{t.tabScene}{activeTab==='scene'&&<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"/>}</button>
                                     </div>
                                     <div className="p-6">
-                                        {activeTab === 'interval' ? (
+                                        {activeTab === 'interval' && (
                                             <div className="space-y-6 animate-fade-in">
                                                 <div className="flex items-center justify-between p-4 bg-slate-950/50 rounded-xl border border-slate-800"><div className="space-y-1"><label className="text-sm font-medium text-slate-200">{t.intervalLabel}</label><p className="text-xs text-slate-500">{t.intervalDesc}</p></div><div className="flex items-center gap-3"><input type="number" min="0.1" step="0.1" value={intervalSec} onChange={(e)=>setIntervalSec(e.target.value)} className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-center text-indigo-300 font-mono outline-none" /><span className="text-sm text-slate-500">{t.seconds}</span></div></div>
                                                 <button onClick={extractByInterval} disabled={!videoSrc||isProcessing} className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]"><Layers size={18}/>{t.btnInterval}</button>
                                             </div>
-                                        ) : (
+                                        )}
+                                        {activeTab === 'scene' && (
                                             <div className="space-y-6 animate-fade-in">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-3"><div className="flex justify-between"><label className="text-sm font-medium text-slate-200">{t.sceneThreshold}</label><span className="text-xs font-mono text-purple-400">{sceneThreshold}%</span></div><input type="range" min="5" max="50" step="1" value={sceneThreshold} onChange={(e)=>setSceneThreshold(Number(e.target.value))} className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500" /><p className="text-xs text-slate-500">{t.sceneThresholdDesc}</p></div>
                                                     <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-3"><div className="flex justify-between"><label className="text-sm font-medium text-slate-200">{t.minSceneDuration}</label><span className="text-xs font-mono text-purple-400">{minSceneDuration}s</span></div><input type="range" min="0.2" max="5" step="0.1" value={minSceneDuration} onChange={(e)=>setMinSceneDuration(Number(e.target.value))} className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500" /><p className="text-xs text-slate-500">{t.minSceneDurationDesc}</p></div>
                                                 </div>
-                                                <button onClick={detectSceneChanges} disabled={!videoSrc||isProcessing} className="w-full py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]"><Zap size={18}/>{t.btnScene}</button>
+                                                <button onClick={detectSceneChanges} disabled={!videoSrc||isProcessing} className="w-full py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-[0.98] relative overflow-hidden"><Zap size={18}/>{t.btnScene}</button>
                                             </div>
                                         )}
                                         <div className="mt-6 pt-6 border-t border-slate-800 flex gap-3">
