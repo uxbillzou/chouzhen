@@ -7,15 +7,13 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 修复点：锁定 Babel 版本为 7.23.5，解决 .targets["esmodules"] 报错问题 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <!-- 锁定 Babel 版本，保证编译稳定 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.20/babel.min.js"></script>
     
+    <!-- 工具库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <!-- 引入 ExcelJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-    <!-- 引入 Markdown 解析器 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -29,27 +27,44 @@
         @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .fade-in { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .vip-badge { background: linear-gradient(45deg, #f59e0b, #fbbf24, #f59e0b); background-size: 200% 200%; animation: shine 3s infinite; }
+        @keyframes shine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-200 overflow-x-hidden">
 
     <div id="loading-screen">
         <div class="loader mb-4"></div>
-        <p>正在初始化工具...</p>
+        <p>正在初始化系统...</p>
     </div>
 
     <div id="root"></div>
 
-    <!-- 添加 data-presets 防止 Babel 自动探测出错 -->
-    <script type="text/babel" data-type="module" data-presets="react">
+    <script type="text/babel" data-type="module">
         import React, { useState, useRef, useEffect } from 'https://esm.sh/react@18.2.0';
         import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
         import { 
             Upload, Image as ImageIcon, Film, Clock, Layers, Check, Play, Pause, 
             SkipForward, Camera, FileVideo, Aperture, Zap, Download, Trash2, 
-            Sparkles, Globe, Languages, QrCode, X, Settings, Key, RotateCcw, FileSpreadsheet,
-            Clapperboard, Copy, Palette, RefreshCw, AlertCircle, ChevronRight
+            Sparkles, Globe, Languages, X, Key, RotateCcw, FileSpreadsheet,
+            ChevronRight, Cpu, CreditCard, Crown, Lock, QrCode, Info
         } from 'https://esm.sh/lucide-react@0.263.1';
+
+        // ==========================================
+        // 🌟 核心：专属激活码数据库 (示例提供前100个，防止代码过长，您可以按需补齐500个)
+        // ==========================================
+        const VALID_CODES = [
+            "SFPRO-X9A2B4", "SFPRO-M7F3Q8", "SFPRO-K1J9D5", "SFPRO-P4R6T2", "SFPRO-W8N5C7", "SFPRO-L3H2Y9", "SFPRO-V6E4M1", "SFPRO-T9Q7P3", "SFPRO-B2D8K6", "SFPRO-F5X1A4",
+            "SFPRO-Y3N7R2", "SFPRO-H8M4J9", "SFPRO-C6P2W5", "SFPRO-A1T9F8", "SFPRO-D4K3V7", "SFPRO-R7B6Y2", "SFPRO-J9H1M5", "SFPRO-Q2X8P4", "SFPRO-N5C4T9", "SFPRO-E3V7L6",
+            "SFPRO-U8A2D1", "SFPRO-Z4F9K3", "SFPRO-M6Y5R8", "SFPRO-T1P3W7", "SFPRO-X9N2H4", "SFPRO-B7C8V1", "SFPRO-L4J6A9", "SFPRO-K2Q5D3", "SFPRO-F8T1M7", "SFPRO-W3R9P6",
+            "SFPRO-P6M4Y2", "SFPRO-V9A7H5", "SFPRO-D2N8X3", "SFPRO-Y5T1K6", "SFPRO-C8F4R9", "SFPRO-H3B2Q7", "SFPRO-J7P5V1", "SFPRO-A4W9M8", "SFPRO-R1L6D4", "SFPRO-E9X3T2",
+            "SFPRO-N2Y8C5", "SFPRO-Q6K7F3", "SFPRO-U4J1A9", "SFPRO-T8M5P2", "SFPRO-V3R6W8", "SFPRO-B9D4N1", "SFPRO-X2H7Y5", "SFPRO-F1Q9K4", "SFPRO-M8C3A7", "SFPRO-P5T2V6",
+            "SFPRO-L9N4D8", "SFPRO-W2X7R3", "SFPRO-K6A1F9", "SFPRO-Y4J8M2", "SFPRO-H1P5T7", "SFPRO-C7V3Q6", "SFPRO-D9B2N4", "SFPRO-R5M6X1", "SFPRO-A3Y9H8", "SFPRO-T4F7P2",
+            "SFPRO-J8K1W5", "SFPRO-N6D3V9", "SFPRO-E2R8C4", "SFPRO-U7A5L1", "SFPRO-V1X4Y6", "SFPRO-P9H2M3", "SFPRO-M4T7F8", "SFPRO-B3N6D2", "SFPRO-X8R1V5", "SFPRO-K5Q9A7",
+            "SFPRO-W1C4P6", "SFPRO-L7J2Y9", "SFPRO-F3M8N4", "SFPRO-Y9D5T1", "SFPRO-C2B7K8", "SFPRO-H6X3R2", "SFPRO-R4P1A9", "SFPRO-A8V6M5", "SFPRO-T2N9Q4", "SFPRO-D7Y4W1",
+            "SFPRO-J3F8H6", "SFPRO-N9K2D5", "SFPRO-E4C7P3", "SFPRO-V8M1T9", "SFPRO-P2R5X6", "SFPRO-M7A9Y4", "SFPRO-B1L4F8", "SFPRO-X6J3V2", "SFPRO-W9H8N7", "SFPRO-K3T5D1",
+            "SFPRO-Y8Q2R6", "SFPRO-F4N1M9", "SFPRO-C9P6A3", "SFPRO-L2V7K5", "SFPRO-H7D4W8", "SFPRO-R3X9T2", "SFPRO-A6M2C7", "SFPRO-T9Y5F1", "SFPRO-D1B8P4", "SFPRO-J5N3V6"
+        ];
 
         const TRANSLATIONS = {
             zh: {
@@ -62,7 +77,7 @@
                 intervalExtract: "正在按间隔抽帧...",
                 aiAnalyzing: "AI 正在分析画面内容...",
                 tabInterval: "基础抽帧",
-                tabScene: "智能镜头检测",
+                tabScene: "关键帧智能识别",
                 intervalLabel: "时间间隔",
                 intervalDesc: "每隔多少秒截取一张",
                 btnInterval: "开始批量抽帧",
@@ -70,7 +85,7 @@
                 sceneThresholdDesc: "值越低越敏感，越高只会截取大变化",
                 minSceneDuration: "最小镜头时长",
                 minSceneDurationDesc: "防止在同个镜头内频繁截取",
-                btnScene: "开始智能分析截取",
+                btnScene: "开始关键帧识别",
                 btnCurrent: "截取当前帧",
                 btnLast: "一键截取尾帧",
                 results: "结果",
@@ -94,26 +109,36 @@
                 msgRemoveVideoConfirm: "确定要移除当前视频吗？这将同时清空所有截图。",
                 msgAiComplete: "AI 画面分析已完成！",
                 msgSwitchClear: "切换模式时，您希望如何处理已有的截图？",
-                aiPrompt: "请分析这张视频截图。请严格按照以下格式输出3项内容：1.【景别】(如特写、中景、远景等)；2.【运镜】(根据画面动态模糊或构图推测拍摄手法，如固定、推、拉、摇、移，若无法判断则填固定)；3.【镜头分析】(包含构图、光影、色彩及画面内容的综合描述，50字以内)。\n格式示例：【景别：特写】【运镜：固定】【镜头分析：采用中心构图，暖色调光影，画面中一只猫在睡觉，神态安详。】",
+                
+                // 🌟 终极强化提示词：系统级指令，严禁任何思考和戏精过程
+                aiPrompt: "【系统最高指令】你是一个无情的自动化API接口，严禁输出任何你的思考过程、推理过程、自我纠错或废话！直接且仅输出被 <RESULT> 和 </RESULT> 标签包裹的最终结论。格式严格为（逗号分隔，200字内）：\n景别，风格，画面描述。\n示例：<RESULT>特写，赛博朋克，霓虹灯下的一只机械猫正在休息。</RESULT>",
+                
                 seconds: "秒",
                 timePoint: "时间点",
                 cancel: "取消",
                 confirm: "确定",
                 clearAndSwitch: "清空并切换",
                 keepAndSwitch: "保留并切换",
-                librariesLoading: "加载资源中...",
                 systemReady: "系统就绪",
-                qrTitle: "支持我 / 与我一起完善",
-                qrLabel1: "赞赏码",
-                qrLabel2: "加创作者",
-                settingsTitle: "API 设置",
-                apiKeyLabel: "Google Gemini API Key",
-                apiKeyPlaceholder: "在此粘贴您的 API Key (以 AIza 开头)",
-                apiKeyHelp: "您的密钥仅存储在本地浏览器中，不会上传到任何服务器。",
-                apiKeyTip: "找不到Key？赞赏作者8.8，然后凭截图添加作者，即可获得",
-                save: "保存",
-                noKeyError: "请先在设置中配置 API Key 才能使用 AI 功能",
-                cancelOp: "停止运行"
+                save: "保存配置",
+                noKeyError: "系统内部错误：API 配置缺失",
+                
+                updateTitle: "版本更新说明",
+                updateBtn: "更新日志",
+                
+                // 计费与激活相关
+                quotaLeft: "AI 剩余次数",
+                freeQuota: "免费",
+                premiumQuota: "高级",
+                rechargeTitle: "获取更多 AI 识别次数",
+                rechargeDesc: "每天免费 30 次额度已用完。添加作者微信购买激活码，获得更多识别额度！",
+                activationCodeLabel: "激活码",
+                activationCodePlaceholder: "请输入激活码 (例: SFPRO-xxxxxx)",
+                activateBtn: "立即激活",
+                activateSuccess: "激活成功！已为您增加 500 次识别额度。",
+                activateFailed: "激活码无效或已被使用，请检查拼写或联系作者。",
+                qrLabel1: "扫码加作者微信",
+                qrLabel2: "获取专属激活码"
             },
             en: {
                 title: "SmartFrame Pro",
@@ -125,7 +150,7 @@
                 intervalExtract: "Extracting Frames...",
                 aiAnalyzing: "AI Analyzing Content...",
                 tabInterval: "Interval Extraction",
-                tabScene: "Smart Scene Detect",
+                tabScene: "Smart Keyframe Detect",
                 intervalLabel: "Time Interval",
                 intervalDesc: "Capture a frame every X seconds",
                 btnInterval: "Start Batch Extraction",
@@ -133,7 +158,7 @@
                 sceneThresholdDesc: "Lower is more sensitive",
                 minSceneDuration: "Min Scene Duration",
                 minSceneDurationDesc: "Minimum seconds between captures",
-                btnScene: "Start Scene Detection",
+                btnScene: "Start Keyframe Detection",
                 btnCurrent: "Capture Current",
                 btnLast: "Capture Last Frame",
                 results: "Results",
@@ -157,44 +182,324 @@
                 msgRemoveVideoConfirm: "Remove video and clear all frames?",
                 msgSwitchClear: "How do you want to handle existing frames when switching modes?",
                 msgAiComplete: "AI Analysis Complete!",
-                aiPrompt: "Analyze this frame. Provide 3 items strictly in this format: [Shot: <Shot Size>] [Movement: <Camera Movement (Static/Pan/Zoom etc)>] [Analysis: <Comprehensive description including composition, lighting, and content>].\nExample: [Shot: Close-up] [Movement: Static] [Analysis: Center composition with warm lighting, showing a sleeping cat.]",
+                
+                // 🌟 English prompt update
+                aiPrompt: "[SYSTEM COMMAND] You are an automated API. DO NOT output any reasoning, thinking process, or extra words. Output ONLY the final result wrapped in <RESULT> and </RESULT> tags. Strict format (comma separated, max 200 chars):\nShot type, Style, Image description.\nExample: <RESULT>Close-up, Cyberpunk, A mechanical cat resting under neon lights.</RESULT>",
+                
                 seconds: "sec",
                 timePoint: "Time",
                 cancel: "Cancel",
                 confirm: "Confirm",
                 clearAndSwitch: "Clear & Switch",
                 keepAndSwitch: "Keep & Switch",
-                librariesLoading: "Loading Libs...",
                 systemReady: "System Ready",
-                qrTitle: "Support Me / Collaborate",
-                qrLabel1: "Donate",
-                qrLabel2: "Contact Creator",
-                settingsTitle: "API Settings",
-                apiKeyLabel: "Google Gemini API Key",
-                apiKeyPlaceholder: "Paste your API Key here (starts with AIza)",
-                apiKeyHelp: "Your key is stored locally in your browser and never sent to our servers.",
-                save: "Save",
-                noKeyError: "Please configure API Key in settings first",
-                cancelOp: "Stop"
+                save: "Save Config",
+                noKeyError: "System Error: Missing API config",
+                
+                updateTitle: "Update Notes",
+                updateBtn: "Changelog",
+                
+                quotaLeft: "AI Quota",
+                freeQuota: "Free",
+                premiumQuota: "Premium",
+                rechargeTitle: "Get More AI Quota",
+                rechargeDesc: "Daily free quota exceeded. Buy an activation code via WeChat for 500 more uses.",
+                activationCodeLabel: "Activation Code",
+                activationCodePlaceholder: "Enter code (e.g. SFPRO-xxxxxx)",
+                activateBtn: "Activate Now",
+                activateSuccess: "Success! 500 uses added to your account.",
+                activateFailed: "Invalid or used code. Please verify or contact support.",
+                qrLabel1: "Add Creator WeChat",
+                qrLabel2: "Get Activation Code"
             }
         };
 
         // --- 工具函数 ---
-        const loadScript = (src) => new Promise((resolve, reject) => { if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; } const script = document.createElement('script'); script.src = src; script.onload = resolve; script.onerror = reject; document.head.appendChild(script); });
         const calculateFrameDifference = (d1, d2) => { let diff = 0; const len = d1.length; for (let i = 0; i < len; i += 4) { diff += Math.abs(d1[i] - d2[i]) + Math.abs(d1[i + 1] - d2[i + 1]) + Math.abs(d1[i + 2] - d2[i + 2]); } return (diff / (len / 4 * 3 * 255)) * 100; };
         const getDominantColor = (ctx, w, h) => { try { const d = ctx.getImageData(0,0,w,h).data; let r=0,g=0,b=0,c=d.length/4; for(let i=0;i<d.length;i+=40){r+=d[i];g+=d[i+1];b+=d[i+2];} const s=Math.ceil(c/10); return `rgb(${Math.floor(r/s)},${Math.floor(g/s)},${Math.floor(b/s)})`; } catch{return '#000'} };
         const base64ToUint8Array = (base64) => { const binaryString = window.atob(base64); const len = binaryString.length; const bytes = new Uint8Array(len); for (let i = 0; i < len; i++) { bytes[i] = binaryString.charCodeAt(i); } return bytes.buffer; };
 
-        // Gemini API Calls (Text Analysis)
-        const analyzeImageWithGemini = async (base64Data, prompt, apiKey) => {
-            if (!apiKey) return "";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            try {
-                const response = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }] }) });
-                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+        // --- 全能版视觉分析 API ---
+        const analyzeImageUniversal = async (base64Data, prompt, config) => {
+            const { provider, apiKey, model, baseUrl } = config;
+            const effectiveKey = (apiKey || '').trim();
+
+            if (!effectiveKey) throw new Error("Missing API Key");
+
+            // 🌟 终极强力提取器：深度反转义 + 句号拆分语义兜底
+            const extractCleanText = (content) => {
+                if (!content) return "";
+                
+                let textToProcess = typeof content === 'string' ? content : JSON.stringify(content);
+                
+                // 1. 深度反转义：解决模型可能转义换行符和标签符号的问题
+                textToProcess = textToProcess.replace(/\\u003c/gi, '<')
+                                             .replace(/\\u003e/gi, '>')
+                                             .replace(/\\n/g, '\n')
+                                             .replace(/\\"/g, '"')
+                                             .replace(/\\\\/g, '\\');
+
+                // 2. 尝试剥离外层 JSON 壳 (只在合法时剥离，防止正则误伤)
+                try {
+                    let jsonStr = textToProcess.replace(/["']\s*，\s*["']/g, '","').replace(/}\s*，\s*{/g, '},{');
+                    const parsed = JSON.parse(jsonStr);
+                    if (Array.isArray(parsed)) {
+                        for (const item of parsed) {
+                            if (item.text) { textToProcess = String(item.text); break; }
+                            if (item.content) { textToProcess = String(item.content); break; }
+                        }
+                    } else if (parsed.text) textToProcess = String(parsed.text); 
+                    else if (parsed.content) textToProcess = String(parsed.content); 
+                } catch (e) {
+                    const jsonMatch = textToProcess.match(/"(?:text|content|output_text)"\s*[:：]\s*"([\s\S]*?)"(?=\s*[,}])/i);
+                    if (jsonMatch && jsonMatch[1]) textToProcess = jsonMatch[1];
+                }
+
+                // 3. 抹杀所有标准包裹的思考过程
+                textToProcess = textToProcess.replace(/<think>[\s\S]*?<\/think>/gi, '');
+                
+                // 4. 🌟 首选提取：<RESULT> 标签 (兼容多行、大小写变体)
+                const resultTagMatch = textToProcess.match(/<RESULT>\s*([\s\S]*?)\s*(?:<\/RESULT>|$)/i);
+                if (resultTagMatch && resultTagMatch[1]) {
+                    let finalClean = resultTagMatch[1].trim();
+                    finalClean = finalClean.replace(/^\["?|"?\]$/g, '').replace(/^["']|["']$/g, '');
+                    return finalClean;
+                }
+
+                // 5. 暴力特征兜底：如果 AI 没写标签而且变成戏精，启动标点拆分搜索
+                textToProcess = textToProcess.replace(new RegExp('\`{3}(?:json)?', 'gi'), '');
+                const thinkIndex = textToProcess.toLowerCase().lastIndexOf('</think>');
+                if (thinkIndex !== -1) textToProcess = textToProcess.substring(thinkIndex + 8);
+                
+                // 【核心修复】按句号/感叹号/问号/换行拆分成独立的句子，应对大段没换行的连篇废话
+                let sentences = textToProcess.split(/[。！？\n]/).map(l => l.trim()).filter(l => l.length > 5);
+                let finalLine = "";
+                
+                // 倒着找带有至少两个逗号/顿号的句子（刚好对应我们要的：景别，风格，描述）
+                for (let i = sentences.length - 1; i >= 0; i--) {
+                    // 剥除句子开头的戏精前缀
+                    let s = sentences[i].replace(/^(整理下|等下|也就是|对|结果是|输出|描述|画面描述|最终结果|最终描述|最终回答|示例|那么)[：:\s，,]*/i, '').trim();
+                    // 剥除句子结尾的肯定类废话
+                    s = s.replace(/[，,]\s*(对|就这个|然后放标签里|对吧|是不是|就这样|嗯|没问题).*$/i, '');
+                    
+                    if (s.length > 10 && (s.includes('，') || s.includes(',') || s.includes('、'))) {
+                        finalLine = s;
+                        break; // 找到了最核心的描述句子，立刻停止搜索
+                    }
+                }
+                
+                if (!finalLine && sentences.length > 0) {
+                    finalLine = sentences[sentences.length - 1].replace(/^(整理下|结果是|输出|描述|画面描述)[：:\s]*/i, '').trim();
+                }
+
+                finalLine = finalLine.replace(/^\["?|"?\]$/g, '').replace(/^["']|["']$/g, '');
+                return finalLine.trim();
+            };
+
+            let rawContent = "";
+
+            if (provider === 'google') {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-2.5-flash'}:generateContent?key=${effectiveKey}`;
+                const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }] };
+                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) { const errText = await response.text(); throw new Error(`Google API Error: ${response.status} - ${errText}`); }
                 const data = await response.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-            } catch (error) { console.error(error); return `Error: ${error.message}`; }
+                rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            } 
+            else if (provider === 'volcengine') {
+                const targetUrl = baseUrl || 'https://ark.cn-beijing.volces.com/api/v3/responses';
+                const payload = {
+                    model: model || 'doubao-seed-2-0-pro-260215', 
+                    input: [ { role: "user", content: [ { type: "input_image", image_url: `data:image/jpeg;base64,${base64Data}` }, { type: "input_text", text: prompt } ] } ]
+                };
+                const response = await fetch(targetUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${effectiveKey}` }, body: JSON.stringify(payload) });
+                
+                if (!response.ok) {
+                    const errText = await response.text(); let errMsg = `API Error: ${response.status} - ${errText}`;
+                    try { const errObj = JSON.parse(errText); if (errObj.error && errObj.error.message) { errMsg = `API 请求失败: ${errObj.error.message}`; } } catch (e) {}
+                    throw new Error(errMsg);
+                }
+                const data = await response.json();
+                if (data.output?.text) rawContent = data.output.text;
+                else if (data.choices?.[0]?.message?.content) rawContent = data.choices[0].message.content;
+                else if (data.output?.choices?.[0]?.message?.content) rawContent = data.output.choices[0].message.content;
+                else rawContent = JSON.stringify(data);
+            }
+            else if (provider === 'openai') {
+                const targetUrl = (baseUrl || 'https://api.openai.com/v1').replace(/\/$/, '') + '/chat/completions';
+                const payload = {
+                    model: model || 'gpt-4o-mini', 
+                    messages: [ { role: "user", content: [ { type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Data}` } } ] } ]
+                };
+                const response = await fetch(targetUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${effectiveKey}` }, body: JSON.stringify(payload) });
+                
+                if (!response.ok) {
+                    const errText = await response.text(); let errMsg = `API Error: ${response.status} - ${errText}`;
+                    try { const errObj = JSON.parse(errText); if (errObj.error && errObj.error.message) { errMsg = `API 请求失败: ${errObj.error.message}`; } } catch (e) {}
+                    throw new Error(errMsg);
+                }
+                const data = await response.json();
+                rawContent = data.choices?.[0]?.message?.content || "";
+            }
+
+            return extractCleanText(rawContent);
+        };
+
+        // --- UI 组件区 ---
+        const Modal = ({ isOpen, title, message, type = 'alert', onConfirm, onCancel, customButtons, texts }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden slide-in">
+                        <div className="p-5">
+                            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                                {type === 'danger' && <Trash2 size={20} className="text-red-500"/>}
+                                {type === 'success' && <Check size={20} className="text-green-500"/>}
+                                {type === 'switch' && <RotateCcw size={20} className="text-amber-500"/>}
+                                {title}
+                            </h3>
+                            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{message}</p>
+                        </div>
+                        <div className="bg-slate-950/50 p-4 flex justify-end gap-3 border-t border-slate-800">
+                            {customButtons ? (
+                                <>
+                                    <button onClick={onCancel} className="px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">{texts.cancel}</button>
+                                    {customButtons.map((btn, idx) => ( <button key={idx} onClick={btn.onClick} className={`px-4 py-2 text-sm font-medium rounded-lg shadow-lg active:scale-95 ${btn.className}`}>{btn.label}</button> ))}
+                                </>
+                            ) : (
+                                <>
+                                    {(type === 'confirm' || type === 'danger') && ( <button onClick={onCancel} className="px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">{texts.cancel}</button> )}
+                                    <button onClick={onConfirm} className={`px-4 py-2 text-sm font-medium rounded-lg shadow-lg active:scale-95 ${type === 'danger' ? 'bg-red-500 text-white' : 'bg-indigo-600 text-white'}`}>{texts.confirm}</button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 🌟 充值/激活码 弹窗 (带点击空白关闭修复)
+        const RechargeModal = ({ isOpen, onClose, onActivate, t }) => {
+            if (!isOpen) return null;
+            const [code, setCode] = React.useState("");
+            const [error, setError] = React.useState("");
+
+            const handleActivate = () => {
+                const codeClean = code.trim().toUpperCase();
+                if (!codeClean) {
+                    setError("激活码不能为空");
+                    return;
+                }
+                const success = onActivate(codeClean);
+                if (success) {
+                    onClose();
+                    setCode("");
+                    setError("");
+                } else {
+                    setError(t.activateFailed);
+                }
+            };
+
+            return (
+                <div 
+                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 fade-in"
+                    onMouseDown={(e) => { if(e.target === e.currentTarget) onClose(); }}
+                >
+                    <div className="bg-slate-900 border border-amber-500/50 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden slide-in relative">
+                        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-amber-900/30 to-transparent pointer-events-none"></div>
+                        
+                        <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-white bg-slate-800/50 hover:bg-slate-700 p-1.5 rounded-full transition-colors z-20">
+                            <X size={20} />
+                        </button>
+
+                        <div className="p-8 relative z-10">
+                            <div className="flex flex-col items-center justify-center mb-6">
+                                <div className="p-4 bg-amber-500/20 rounded-full border-2 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)] mb-4">
+                                    <Crown size={48} className="text-amber-400" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-center text-white mb-2">{t.rechargeTitle}</h3>
+                                
+                                {/* 🌟 售价与额度说明 */}
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-4xl font-black text-amber-400">¥ 8.8</span>
+                                    <span className="text-slate-400">/ 500张额度</span>
+                                </div>
+                                <p className="text-slate-400 text-center text-sm leading-relaxed max-w-sm">{t.rechargeDesc}</p>
+                            </div>
+
+                            <div className="bg-white p-4 rounded-xl flex justify-center gap-8 items-center mb-8">
+                                <div className="text-center">
+                                    <img src="wechat.png" className="w-28 h-28 object-cover border border-slate-200 rounded" alt="WeChat" />
+                                    <p className="text-xs text-slate-900 mt-2 font-bold">{t.qrLabel1}</p>
+                                </div>
+                                <div className="text-center">
+                                    <div className="w-28 h-28 flex items-center justify-center bg-amber-50 border border-amber-200 rounded">
+                                        <Sparkles className="text-amber-500" size={40} />
+                                    </div>
+                                    <p className="text-xs text-slate-900 mt-2 font-bold">{t.qrLabel2}</p>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-slate-800">
+                                <label className="text-sm font-medium text-slate-300 mb-2 block">{t.activationCodeLabel}</label>
+                                <div className="flex gap-2">
+                                    <input type="text" value={code} onChange={(e) => { setCode(e.target.value); setError(""); }} placeholder={t.activationCodePlaceholder} className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-amber-500 outline-none uppercase font-mono" />
+                                    <button onClick={handleActivate} className="px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold rounded-lg shadow-lg active:scale-95 transition-all whitespace-nowrap">
+                                        {t.activateBtn}
+                                    </button>
+                                </div>
+                                {error && <p className="text-red-400 text-xs mt-2 animate-bounce">{error}</p>}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 🌟 更新日志弹窗
+        const UpdateModal = ({ isOpen, onClose, t }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in" onMouseDown={(e) => { if(e.target === e.currentTarget) onClose(); }}>
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden slide-in relative">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <Info className="w-5 h-5 text-indigo-400" /> {t.updateTitle}
+                                </h3>
+                                <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors"><X size={20} /></button>
+                            </div>
+                            <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                                <div className="relative pl-4 border-l-2 border-indigo-500">
+                                    <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div>
+                                    <h4 className="text-sm font-bold text-white mb-1">V2.0.0 <span className="text-[10px] font-normal text-indigo-400 ml-2 px-1.5 py-0.5 bg-indigo-500/20 rounded">最新</span></h4>
+                                    <p className="text-xs text-slate-300 leading-relaxed">
+                                        - 核心升级：引入全新 AI 深度语义分析引擎。<br/>
+                                        - 新增特征：底层自动剔除模型思考过程，支持结构化提取【景别】、【风格】与【详细画面描述】。<br/>
+                                        - 优化导出：Excel 分镜表支持高清截图内嵌与智能自适应排版。
+                                    </p>
+                                </div>
+                                <div className="relative pl-4 border-l-2 border-slate-700">
+                                    <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-slate-600"></div>
+                                    <h4 className="text-sm font-bold text-slate-400 mb-1">V1.5.0</h4>
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        - 新增：充值与激活体系，支持专属激活码功能，保障接口防刷。<br/>
+                                        - 优化：每日免费 30 次基础提取额度自动重置。
+                                    </p>
+                                </div>
+                                <div className="relative pl-4 border-l-2 border-slate-700">
+                                    <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-slate-600"></div>
+                                    <h4 className="text-sm font-bold text-slate-400 mb-1">V1.0.0</h4>
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        - 智能视频抽帧 Pro 正式发布。<br/>
+                                        - 支持精准按时间间隔与智能镜头画面差异分析自动抽帧。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
         };
 
         const TechBackground = () => {
@@ -225,71 +530,34 @@
             return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full pointer-events-none z-0" style={{background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)'}} />;
         };
 
-        const Modal = ({ isOpen, title, message, type = 'alert', onConfirm, onCancel, customButtons, texts }) => {
-            if (!isOpen) return null;
-            return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden slide-in">
-                        <div className="p-5">
-                            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-                                {type === 'danger' && <Trash2 size={20} className="text-red-500"/>}
-                                {type === 'success' && <Check size={20} className="text-green-500"/>}
-                                {type === 'switch' && <RotateCcw size={20} className="text-amber-500"/>}
-                                {title}
-                            </h3>
-                            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{message}</p>
-                        </div>
-                        <div className="bg-slate-950/50 p-4 flex justify-end gap-3 border-t border-slate-800">
-                            {customButtons ? (
-                                <>
-                                    <button onClick={onCancel} className="px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">{texts.cancel}</button>
-                                    {customButtons.map((btn, idx) => (
-                                        <button key={idx} onClick={btn.onClick} className={`px-4 py-2 text-sm font-medium rounded-lg shadow-lg active:scale-95 ${btn.className}`}>
-                                            {btn.label}
-                                        </button>
-                                    ))}
-                                </>
-                            ) : (
-                                <>
-                                    {(type === 'confirm' || type === 'danger') && (
-                                        <button onClick={onCancel} className="px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">{texts.cancel}</button>
-                                    )}
-                                    <button onClick={onConfirm} className={`px-4 py-2 text-sm font-medium rounded-lg shadow-lg active:scale-95 ${type === 'danger' ? 'bg-red-500 text-white' : 'bg-indigo-600 text-white'}`}>{texts.confirm}</button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const SettingsModal = ({ isOpen, onClose, apiKey, setApiKey, t }) => {
-            if (!isOpen) return null;
-            const [tempKey, setTempKey] = React.useState(apiKey);
-            const handleSave = () => { setApiKey(tempKey); localStorage.setItem('gemini_api_key', tempKey); onClose(); };
-            return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 fade-in">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden slide-in">
-                        <div className="p-6 space-y-4">
-                            <div className="flex justify-between items-center"><h3 className="text-xl font-bold text-white flex items-center gap-2"><Settings className="w-5 h-5 text-indigo-400" /> {t.settingsTitle}</h3><button onClick={onClose} className="text-slate-500 hover:text-white"><X size={20} /></button></div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Key size={14} /> {t.apiKeyLabel}</label>
-                                <input type="password" value={tempKey} onChange={(e) => setTempKey(e.target.value)} placeholder={t.apiKeyPlaceholder} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none" />
-                                <p className="text-xs text-slate-500">{t.apiKeyHelp}</p>
-                                <p className="text-xs text-indigo-400 mt-2 font-medium">{t.apiKeyTip}</p>
-                            </div>
-                        </div>
-                        <div className="bg-slate-950/50 p-4 flex justify-end border-t border-slate-800"><button onClick={handleSave} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg shadow-lg transition-all active:scale-95">{t.save}</button></div>
-                    </div>
-                </div>
-            );
-        };
-
         const App = () => {
             const [lang, setLang] = useState('zh');
             const t = TRANSLATIONS[lang];
-            const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
-            const [showSettings, setShowSettings] = useState(false);
+            
+            // 🌟 核心：内置固定的 API 配置 (用户不可见)
+            const apiConfig = { 
+                provider: 'volcengine', 
+                apiKey: 'f2ec8c1f-1945-4fb1-9560-e32b1e0c34eb', 
+                model: 'doubao-seed-2-0-pro-260215', 
+                baseUrl: 'https://ark.cn-beijing.volces.com/api/v3/responses' 
+            };
+            
+            // 🌟 核心修复1：同步初始化额度。消除异步生命周期导致的“突然刷新/重置回档”的视觉Bug
+            const [freeQuota, setFreeQuota] = useState(() => {
+                const today = new Date().toLocaleDateString();
+                const storedDate = localStorage.getItem('sf_last_reset_date');
+                if (storedDate !== today) {
+                    localStorage.setItem('sf_last_reset_date', today);
+                    localStorage.setItem('sf_free_quota', '30');
+                    return 30; // 每天新访问时直接赋予 30 次
+                }
+                return parseInt(localStorage.getItem('sf_free_quota') || '30', 10);
+            });
+            const [premiumQuota, setPremiumQuota] = useState(() => parseInt(localStorage.getItem('sf_premium_quota') || '0', 10));
+            const [usedCodes, setUsedCodes] = useState(() => JSON.parse(localStorage.getItem('sf_used_codes') || '[]'));
+
+            const [showRecharge, setShowRecharge] = useState(false);
+            const [showUpdate, setShowUpdate] = useState(false);
             
             const [videoFile, setVideoFile] = useState(null);
             const [videoSrc, setVideoSrc] = useState(null);
@@ -314,7 +582,11 @@
             const fileInputRef = useRef(null);
             const cancelRef = useRef(false);
 
-            useEffect(() => { const loader = document.getElementById('loading-screen'); if (loader) loader.style.display = 'none'; }, []);
+            // 因为已在 useState 同步处理过，移除旧版的 useEffect 初始化额度逻辑
+            useEffect(() => {
+                const loader = document.getElementById('loading-screen'); 
+                if (loader) loader.style.display = 'none'; 
+            }, []);
 
             useEffect(() => {
                 setFrames(prev => prev.map(frame => {
@@ -330,6 +602,48 @@
             const closeModal = () => setModalConfig(prev => ({ ...prev, isOpen: false }));
             const cancelProcessing = () => { cancelRef.current = true; };
 
+            // 🌟 核心修复2：基于真实的本地缓存计算扣费，不再依赖可能过时的闭包状态，彻底断绝回档可能
+            const consumeQuota = (amountToConsume) => {
+                let currentFree = parseInt(localStorage.getItem('sf_free_quota') || '30', 10);
+                let currentPremium = parseInt(localStorage.getItem('sf_premium_quota') || '0', 10);
+                
+                if (currentFree >= amountToConsume) {
+                    currentFree -= amountToConsume;
+                } else {
+                    let toDeduct = amountToConsume - currentFree;
+                    currentFree = 0;
+                    currentPremium -= toDeduct;
+                }
+                
+                setFreeQuota(currentFree);
+                setPremiumQuota(currentPremium);
+                localStorage.setItem('sf_free_quota', currentFree.toString());
+                localStorage.setItem('sf_premium_quota', currentPremium.toString());
+            };
+
+            // 🌟 核心修复3：激活后立即写入本地黑名单，实时锁死，防重复刷
+            const handleActivateCode = (code) => {
+                const currentUsedCodes = JSON.parse(localStorage.getItem('sf_used_codes') || '[]');
+                if (currentUsedCodes.includes(code)) return false; // 已销毁，拒绝
+                
+                if (VALID_CODES.includes(code)) {
+                    let currentPremium = parseInt(localStorage.getItem('sf_premium_quota') || '0', 10);
+                    const newPremium = currentPremium + 500;
+                    
+                    setPremiumQuota(newPremium);
+                    localStorage.setItem('sf_premium_quota', newPremium.toString());
+                    
+                    // 立即将使用的 code 写入黑名单并持久化
+                    const newCodes = [...currentUsedCodes, code];
+                    setUsedCodes(newCodes);
+                    localStorage.setItem('sf_used_codes', JSON.stringify(newCodes));
+                    
+                    alert(t.activateSuccess);
+                    return true;
+                }
+                return false;
+            };
+
             const handleFile = (file) => {
                 if (file && file.type.startsWith('video/')) {
                     if (videoSrc) URL.revokeObjectURL(videoSrc);
@@ -342,74 +656,80 @@
             };
 
             const handleRemoveVideo = () => {
-                showModal({
-                    title: t.modalConfirm,
-                    message: t.msgRemoveVideoConfirm,
-                    type: 'danger',
-                    onConfirm: () => {
-                        if (videoSrc) URL.revokeObjectURL(videoSrc);
-                        setVideoFile(null);
-                        setVideoSrc(null);
-                        setFrames([]);
-                        setSelectedFrameIds(new Set());
-                        setIsPlaying(false);
-                        setCurrentTime(0);
-                        setDuration(0);
-                    }
-                });
+                showModal({ title: t.modalConfirm, message: t.msgRemoveVideoConfirm, type: 'danger', onConfirm: () => { if (videoSrc) URL.revokeObjectURL(videoSrc); setVideoFile(null); setVideoSrc(null); setFrames([]); setSelectedFrameIds(new Set()); setIsPlaying(false); setCurrentTime(0); setDuration(0); }});
             };
 
             const handleTabChange = (targetTab) => {
                 if (activeTab === targetTab) return;
-                if (frames.length > 0) {
+                if (frames.length > 0 && (targetTab === 'interval' || targetTab === 'scene')) {
                     showModal({
-                        title: t.modalConfirm,
-                        message: t.msgSwitchClear,
-                        type: 'switch',
+                        title: t.modalConfirm, message: t.msgSwitchClear, type: 'switch',
                         customButtons: [
-                            {
-                                label: t.keepAndSwitch,
-                                className: "bg-slate-700 hover:bg-slate-600 text-white",
-                                onClick: () => { setActiveTab(targetTab); closeModal(); }
-                            },
-                            {
-                                label: t.clearAndSwitch,
-                                className: "bg-indigo-600 hover:bg-indigo-500 text-white",
-                                onClick: () => { 
-                                    setFrames([]); 
-                                    setSelectedFrameIds(new Set()); 
-                                    setActiveTab(targetTab); 
-                                    closeModal(); 
-                                }
-                            }
+                            { label: t.keepAndSwitch, className: "bg-slate-700 hover:bg-slate-600 text-white", onClick: () => { setActiveTab(targetTab); closeModal(); } },
+                            { label: t.clearAndSwitch, className: "bg-indigo-600 hover:bg-indigo-500 text-white", onClick: () => { setFrames([]); setSelectedFrameIds(new Set()); setActiveTab(targetTab); closeModal(); } }
                         ]
                     });
-                } else {
-                    setActiveTab(targetTab);
-                }
+                } else { setActiveTab(targetTab); }
             };
 
-            const captureFrame = (video, time, meta = {}) => { const canvas = canvasRef.current; const ctx = canvas.getContext('2d'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0, canvas.width, canvas.height); const color = getDominantColor(ctx, canvas.width, canvas.height); return { id: Date.now() + Math.random(), dataUrl: canvas.toDataURL('image/jpeg', 0.85), time: time, width: canvas.width, height: canvas.height, description: `${t.timePoint}: ${time.toFixed(2)}s`, meta: { color, ...meta } }; };
-            const extractLastFrame = async () => { if (!videoRef.current) return; setIsProcessing(true); const video = videoRef.current; const originalTime = video.currentTime; const wasPlaying = !video.paused; if(wasPlaying) video.pause(); try { const targetTime = Math.max(0, video.duration - 0.1); video.currentTime = targetTime; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); }); const frame = captureFrame(video, targetTime); setFrames(prev => [frame, ...prev]); } catch (e) { showModal({title: t.modalError, message: "截取失败", type: 'alert'}); } finally { video.currentTime = originalTime; setIsProcessing(false); if(wasPlaying) video.play(); } };
-            const detectSceneChanges = async () => { if (!videoRef.current) return; cancelRef.current = false; setIsProcessing(true); setProcessStatus(t.analyzing); const video = videoRef.current; video.pause(); const newFrames = []; let lastSavedTime = -minSceneDuration; let prevImageData = null; const diffCtx = processingCanvasRef.current.getContext('2d', { willReadFrequently: true }); processingCanvasRef.current.width = 64; processingCanvasRef.current.height = 64; const step = 0.2; let currentTimeCursor = 0; const totalDuration = video.duration; try { video.currentTime = 0; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); }); diffCtx.drawImage(video, 0, 0, 64, 64); prevImageData = diffCtx.getImageData(0, 0, 64, 64).data; newFrames.push(captureFrame(video, 0, { diffScore: 100 })); lastSavedTime = 0; currentTimeCursor += step; while (currentTimeCursor < totalDuration) { if (cancelRef.current) break; setProgress(Math.round((currentTimeCursor / totalDuration) * 100)); video.currentTime = currentTimeCursor; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); }); diffCtx.drawImage(video, 0, 0, 64, 64); const currentImageData = diffCtx.getImageData(0, 0, 64, 64).data; const diff = calculateFrameDifference(prevImageData, currentImageData); if (diff > sceneThreshold && (currentTimeCursor - lastSavedTime) >= minSceneDuration) { newFrames.push(captureFrame(video, currentTimeCursor, { diffScore: diff.toFixed(1) })); lastSavedTime = currentTimeCursor; } prevImageData = currentImageData; currentTimeCursor += step; } setFrames(prev => [...prev, ...newFrames]); if (!cancelRef.current) showModal({title: t.modalSuccess, message: `${t.results}: ${newFrames.length}`, type: 'success'}); } catch (e) { console.error(e); showModal({title: t.modalError, message: e.message, type: 'alert'}); } finally { setIsProcessing(false); setProgress(0); setProcessStatus(''); video.currentTime = 0; } };
-            const extractByInterval = async () => { if (!videoRef.current || intervalSec <= 0) return; cancelRef.current = false; setIsProcessing(true); setProcessStatus(t.intervalExtract); const video = videoRef.current; video.pause(); const newFrames = []; let currentTimeCursor = 0; const totalDuration = video.duration; try { while (currentTimeCursor <= totalDuration) { if (cancelRef.current) break; setProgress(Math.round((currentTimeCursor / totalDuration) * 100)); video.currentTime = currentTimeCursor; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); }); newFrames.push(captureFrame(video, currentTimeCursor)); currentTimeCursor += parseFloat(intervalSec); } setFrames(prev => [...prev, ...newFrames]); if (!cancelRef.current) showModal({title: t.modalSuccess, message: `${t.results}: ${newFrames.length}`, type: 'success'}); } catch (e) { console.error(e); } finally { setIsProcessing(false); setProgress(0); setProcessStatus(''); video.currentTime = 0; } };
+            const captureFrame = (video, time, meta = {}) => { 
+                if (!canvasRef.current) return null;
+                const canvas = canvasRef.current; 
+                const ctx = canvas.getContext('2d'); 
+                if (!ctx) return null;
+                canvas.width = video.videoWidth; 
+                canvas.height = video.videoHeight; 
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height); 
+                const color = getDominantColor(ctx, canvas.width, canvas.height); 
+                return { id: Date.now() + Math.random(), dataUrl: canvas.toDataURL('image/jpeg', 0.85), time: time, width: canvas.width, height: canvas.height, description: `${t.timePoint}: ${time.toFixed(2)}s`, meta: { color, ...meta } }; 
+            };
+            
+            const extractLastFrame = async () => { if (!videoRef.current) return; setIsProcessing(true); const video = videoRef.current; const originalTime = video.currentTime; const wasPlaying = !video.paused; if(wasPlaying) video.pause(); try { const targetTime = Math.max(0, video.duration - 0.1); video.currentTime = targetTime; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); }); const frame = captureFrame(video, targetTime); if (frame) setFrames(prev => [frame, ...prev]); } catch (e) { showModal({title: t.modalError, message: "截取失败", type: 'alert'}); } finally { video.currentTime = originalTime; setIsProcessing(false); if(wasPlaying) video.play(); } };
+            
+            const detectSceneChanges = async () => {
+                if (!videoRef.current || !processingCanvasRef.current) return; cancelRef.current = false; setIsProcessing(true); setProcessStatus(t.analyzing); const video = videoRef.current; video.pause(); const newFrames = []; let lastSavedTime = -minSceneDuration; let prevImageData = null; const diffCtx = processingCanvasRef.current.getContext('2d', { willReadFrequently: true }); processingCanvasRef.current.width = 64; processingCanvasRef.current.height = 64; const step = 0.2; let currentTimeCursor = 0; const totalDuration = video.duration;
+                try { video.currentTime = 0; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); }); diffCtx.drawImage(video, 0, 0, 64, 64); prevImageData = diffCtx.getImageData(0, 0, 64, 64).data; const firstFrame = captureFrame(video, 0, { diffScore: 100 }); if (firstFrame) newFrames.push(firstFrame); lastSavedTime = 0; currentTimeCursor += step; while (currentTimeCursor < totalDuration) { if (cancelRef.current) break; setProgress(Math.round((currentTimeCursor / totalDuration) * 100)); video.currentTime = currentTimeCursor; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); }); diffCtx.drawImage(video, 0, 0, 64, 64); const currentImageData = diffCtx.getImageData(0, 0, 64, 64).data; const diff = calculateFrameDifference(prevImageData, currentImageData); if (diff > sceneThreshold && (currentTimeCursor - lastSavedTime) >= minSceneDuration) { const frame = captureFrame(video, currentTimeCursor, { diffScore: diff.toFixed(1) }); if(frame) newFrames.push(frame); lastSavedTime = currentTimeCursor; } prevImageData = currentImageData; currentTimeCursor += step; } setFrames(prev => [...prev, ...newFrames]); if (!cancelRef.current) showModal({title: t.modalSuccess, message: `${t.results}: ${newFrames.length}`, type: 'success'}); } catch (e) { console.error(e); showModal({title: t.modalError, message: e.message, type: 'alert'}); } finally { setIsProcessing(false); setProgress(0); setProcessStatus(''); video.currentTime = 0; }
+            };
+
+            const extractByInterval = async () => {
+                if (!videoRef.current || intervalSec <= 0) return; cancelRef.current = false; setIsProcessing(true); setProcessStatus(t.intervalExtract); const video = videoRef.current; video.pause(); const newFrames = []; let currentTimeCursor = 0; const totalDuration = video.duration; try { while (currentTimeCursor <= totalDuration) { if (cancelRef.current) break; setProgress(Math.round((currentTimeCursor / totalDuration) * 100)); video.currentTime = currentTimeCursor; await new Promise(r => { video.addEventListener('seeked', r, { once: true }); }); const frame = captureFrame(video, currentTimeCursor); if(frame) newFrames.push(frame); currentTimeCursor += parseFloat(intervalSec); } setFrames(prev => [...prev, ...newFrames]); if (!cancelRef.current) showModal({title: t.modalSuccess, message: `${t.results}: ${newFrames.length}`, type: 'success'}); } catch (e) { console.error(e); } finally { setIsProcessing(false); setProgress(0); setProcessStatus(''); video.currentTime = 0; }
+            };
+
+            // 🌟 执行 AI 分析 (带额度拦截)
             const runBatchAIAnalysis = async () => {
-                if (frames.length === 0) return; 
-                if (!apiKey) { setShowSettings(true); setTimeout(() => alert(t.noKeyError), 100); return; } 
+                const totalNeeded = frames.length;
+                if (totalNeeded === 0) return; 
+                
+                if (!apiConfig.apiKey || !apiConfig.model) { alert(t.noKeyError); return; } 
+                
+                if (freeQuota + premiumQuota < totalNeeded) {
+                    setShowRecharge(true);
+                    return;
+                }
+
+                consumeQuota(totalNeeded);
+
                 cancelRef.current = false; 
                 setIsProcessing(true); 
                 setProcessStatus(t.aiAnalyzing); 
                 let completed = 0; 
+
                 for (let i = 0; i < frames.length; i++) { 
                     if (cancelRef.current) break; 
                     try { 
-                        if (i > 0) await new Promise(r => setTimeout(r, 800)); 
-                        const desc = await analyzeImageWithGemini(frames[i].dataUrl.split(',')[1], t.aiPrompt, apiKey); 
-                        if (desc) setFrames(prev => { const next = [...prev]; if(next[i]) next[i].description = desc.trim(); return next; }); 
-                    } catch (e) { console.error(e); } 
+                        if (i > 0) await new Promise(r => setTimeout(r, 1000)); 
+                        const frame = frames[i];
+                        const base64 = frame.dataUrl.split(',')[1];
+                        const desc = await analyzeImageUniversal(base64, t.aiPrompt, apiConfig); 
+                        if (desc) setFrames(prev => prev.map(f => f.id === frame.id ? { ...f, description: desc } : f)); 
+                    } catch (e) { 
+                        console.error(e); 
+                        setFrames(prev => prev.map(f => f.id === frames[i].id ? { ...f, description: `分析失败: ${e.message}` } : f));
+                    } 
                     completed++; 
                     setProgress(Math.round((completed / frames.length) * 100)); 
                 } 
+
                 setIsProcessing(false); 
                 setProgress(0); 
                 if (!cancelRef.current) showModal({title: t.modalSuccess, message: t.msgAiComplete, type: 'success'}); 
@@ -420,91 +740,97 @@
             
             const downloadStoryboard = async () => {
                 if (!window.ExcelJS) return showModal({title: t.modalError, message: t.librariesLoading, type: 'alert'});
+                const workbook = new ExcelJS.Workbook(); const worksheet = workbook.addWorksheet('Storyboard');
                 
-                const workbook = new ExcelJS.Workbook();
-                const worksheet = workbook.addWorksheet('Storyboard');
-
-                worksheet.columns = [
-                    { header: '编号', key: 'no', width: 8 },
-                    { header: '景别', key: 'shot', width: 15 },
-                    { header: '运镜', key: 'movement', width: 15 },
+                // 🌟 更新列定义，增加 "时间(s)" 列
+                worksheet.columns = [ 
+                    { header: '编号', key: 'no', width: 8 }, 
+                    { header: '时间(s)', key: 'time', width: 10 },
+                    { header: '景别', key: 'shot', width: 15 }, 
+                    { header: '风格', key: 'style', width: 15 }, 
                     { header: '画面', key: 'image', width: 32 }, 
-                    { header: '镜头分析', key: 'analysis', width: 50 }
+                    { header: '画面描述', key: 'description', width: 50 } 
                 ];
-
+                
                 for (let i = 0; i < frames.length; i++) {
-                    const frame = frames[i];
+                    const frame = frames[i]; let shot = "-", style = "-", desc = frame.description;
+                    const parts = frame.description.split(/[，,]/);
+                    if (parts.length >= 3) {
+                        shot = parts[0].trim();
+                        style = parts[1].trim();
+                        desc = parts.slice(2).join('，').trim();
+                    } else if (parts.length === 2) {
+                        shot = parts[0].trim();
+                        desc = parts[1].trim();
+                    }
                     
-                    let shot = "", movement = "", analysis = "";
-                    const shotMatch = frame.description.match(/【景别[：:]\s*(.*?)】/) || frame.description.match(/\[Shot[：:]\s*(.*?)\]/i);
-                    const moveMatch = frame.description.match(/【运镜[：:]\s*(.*?)】/) || frame.description.match(/\[Movement[：:]\s*(.*?)\]/i);
-                    const analysisMatch = frame.description.match(/【镜头分析[：:]\s*(.*?)】/) || frame.description.match(/\[Analysis[：:]\s*(.*?)\]/i);
-                    if(shotMatch) shot = shotMatch[1]; 
-                    if(moveMatch) movement = moveMatch[1]; 
-                    if(analysisMatch) analysis = analysisMatch[1]; 
-                    else analysis = frame.description.replace(/【.*?】|\[.*?\]/g, '').trim();
-
-                    const row = worksheet.addRow({
-                        no: i + 1,
-                        shot: shot || "-",
-                        movement: movement || "-",
+                    // 🌟 填入数据，包括秒数
+                    const row = worksheet.addRow({ 
+                        no: i + 1, 
+                        time: frame.time.toFixed(2), 
+                        shot: shot, 
+                        style: style, 
                         image: '', 
-                        analysis: analysis || frame.description
+                        description: desc 
+                    }); 
+                    row.height = 90;
+                    
+                    // 🌟 调整居中样式，包含前4列（编号、时间、景别、风格）
+                    row.eachCell({ includeEmpty: true }, (cell) => { 
+                        cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true }; 
+                        if(cell.col === 1 || cell.col === 2 || cell.col === 3 || cell.col === 4) cell.alignment.horizontal = 'center'; 
                     });
-
-                    row.height = 90; 
-
-                    row.eachCell({ includeEmpty: true }, (cell) => {
-                        cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
-                        if(cell.col === 1 || cell.col === 2 || cell.col === 3) cell.alignment.horizontal = 'center'; 
-                    });
-
-                    const base64Data = frame.dataUrl.split(',')[1];
-                    const imageId = workbook.addImage({
-                        buffer: base64ToUint8Array(base64Data),
-                        extension: 'jpeg',
-                    });
-
-                    const aspectRatio = frame.width / frame.height;
-                    const displayHeight = 100; 
-                    const displayWidth = displayHeight * aspectRatio;
-
-                    worksheet.addImage(imageId, {
-                        tl: { col: 3.1, row: i + 1.1 }, 
-                        ext: { width: displayWidth, height: displayHeight },
-                        editAs: 'oneCell' 
-                    });
+                    
+                    const base64Data = frame.dataUrl.split(',')[1]; const imageId = workbook.addImage({ buffer: base64ToUint8Array(base64Data), extension: 'jpeg', });
+                    const aspectRatio = frame.width / frame.height; const displayHeight = 100; const displayWidth = displayHeight * aspectRatio;
+                    
+                    // 🌟 图片位置从 3.1 顺延到 4.1（因为前面加了一列）
+                    worksheet.addImage(imageId, { tl: { col: 4.1, row: i + 1.1 }, ext: { width: displayWidth, height: displayHeight }, editAs: 'oneCell' });
                 }
-
-                const headerRow = worksheet.getRow(1);
-                headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
-                headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
-                headerRow.height = 30;
-                headerRow.eachCell((cell) => {
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } };
-                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-                });
-
-                const buffer = await workbook.xlsx.writeBuffer();
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                window.saveAs(blob, "storyboard_分镜表.xlsx");
+                const headerRow = worksheet.getRow(1); headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 }; headerRow.alignment = { vertical: 'middle', horizontal: 'center' }; headerRow.height = 30; headerRow.eachCell((cell) => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } }; cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} }; });
+                const buffer = await workbook.xlsx.writeBuffer(); const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }); window.saveAs(blob, "storyboard_分镜表.xlsx");
             };
+
+            const totalQuota = freeQuota + premiumQuota;
 
             return (
                 <div className="min-h-screen text-slate-200 font-sans selection:bg-indigo-500/30 pb-20 relative overflow-hidden">
                     <Modal {...modalConfig} texts={{ cancel: t.cancel, confirm: t.confirm }} />
-                    <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} apiKey={apiKey} setApiKey={setApiKey} t={t} />
-                    <canvas ref={canvasRef} className="hidden-canvas" />
-                    <canvas ref={processingCanvasRef} className="hidden-canvas" />
-                    <TechBackground />
+                    <RechargeModal isOpen={showRecharge} onClose={() => setShowRecharge(false)} onActivate={handleActivateCode} t={t} />
+                    <UpdateModal isOpen={showUpdate} onClose={() => setShowUpdate(false)} t={t} />
+                    
+                    <div className="fixed inset-0 w-full h-full bg-slate-950 -z-10"></div>
+                    
+                    {/* Move canvas outside of main flow but keep in DOM to ensure they are available */}
+                    <div style={{display: 'none'}}>
+                        <canvas ref={canvasRef} />
+                        <canvas ref={processingCanvasRef} />
+                    </div>
 
                     <div className="relative z-10">
                         <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-40">
                             <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                                <div className="flex items-center gap-2"><div className="bg-indigo-500 p-1.5 rounded-lg shadow-indigo-500/20 shadow-lg"><Film className="w-6 h-6 text-white" /></div><h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent hidden sm:block">{t.title}</h1></div>
-                                <div className="flex items-center gap-4"><button onClick={() => setShowSettings(true)} className={`p-2 rounded-lg transition-all ${apiKey ? 'text-slate-400 hover:text-indigo-400' : 'text-amber-400 animate-pulse hover:text-amber-300'}`} title={t.settingsTitle}><Settings size={20} /></button><div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700"><button onClick={() => setLang('zh')} className={`px-2 py-1 text-xs font-medium rounded-md ${lang === 'zh' ? 'bg-slate-600 text-white' : 'text-slate-400'}`}>中文</button><button onClick={() => setLang('en')} className={`px-2 py-1 text-xs font-medium rounded-md ${lang === 'en' ? 'bg-slate-600 text-white' : 'text-slate-400'}`}>EN</button></div></div>
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-indigo-500 p-1.5 rounded-lg shadow-indigo-500/20 shadow-lg"><Film className="w-6 h-6 text-white" /></div>
+                                    <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent hidden sm:block">{t.title}</h1>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <button onClick={() => setShowRecharge(true)} className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full px-3 py-1.5 transition-all group">
+                                        <CreditCard size={14} className="text-amber-400 group-hover:scale-110 transition-transform" />
+                                        <div className="flex flex-col text-[10px] leading-tight text-left">
+                                            <span className="text-slate-400">{t.quotaLeft}</span>
+                                            <span className="font-bold text-white tracking-wider">{totalQuota}</span>
+                                        </div>
+                                    </button>
+
+                                    <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
+                                        <button onClick={() => setLang('zh')} className={`px-2 py-1 text-xs font-medium rounded-md ${lang === 'zh' ? 'bg-slate-600 text-white' : 'text-slate-400'}`}>中文</button>
+                                        <button onClick={() => setLang('en')} className={`px-2 py-1 text-xs font-medium rounded-md ${lang === 'en' ? 'bg-slate-600 text-white' : 'text-slate-400'}`}>EN</button>
+                                    </div>
+                                </div>
                             </div>
                         </header>
+                        
                         <main className="max-w-7xl mx-auto px-4 py-8 grid lg:grid-cols-12 gap-8">
                             <div className="lg:col-span-7 space-y-6">
                                 <div className={`relative group aspect-video bg-slate-900/80 backdrop-blur-sm rounded-2xl border-2 border-dashed overflow-hidden transition-all shadow-2xl ${dragActive ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800'} ${videoSrc ? 'border-none bg-black' : ''}`}
@@ -543,17 +869,9 @@
                                             </div>
                                         )}
                                         <div className="mt-6 pt-6 border-t border-slate-800 flex gap-3">
-                                            <button onClick={()=>{if(!videoRef.current)return;const f=captureFrame(videoRef.current,videoRef.current.currentTime);setFrames(prev=>[f,...prev])}} disabled={!videoSrc} className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium flex items-center justify-center gap-2"><Camera size={16}/>{t.btnCurrent}</button>
+                                            <button onClick={()=>{if(!videoRef.current)return;const f=captureFrame(videoRef.current,videoRef.current.currentTime);if(f) setFrames(prev=>[f,...prev])}} disabled={!videoSrc} className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium flex items-center justify-center gap-2"><Camera size={16}/>{t.btnCurrent}</button>
                                             <button onClick={extractLastFrame} disabled={!videoSrc} className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium flex items-center justify-center gap-2"><SkipForward size={16}/>{t.btnLast}</button>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-6 mt-8">
-                                    <div className="flex items-center gap-2 mb-4 text-slate-400 text-sm font-medium uppercase tracking-wider justify-center md:justify-start"><QrCode size={16}/>{t.qrTitle}</div>
-                                    <div className="flex flex-col md:flex-row gap-6 justify-center md:justify-start">
-                                        <div className="flex flex-col items-center gap-2"><div className="w-32 h-32 bg-white rounded-lg p-2 flex items-center justify-center border-2 border-indigo-500/20 shadow-lg"><img src="wechat.png" alt="QR 1" className="w-full h-full opacity-80" /></div><span className="text-xs text-slate-500 font-medium">{t.qrLabel1}</span></div>
-                                        <div className="flex flex-col items-center gap-2"><div className="w-32 h-32 bg-white rounded-lg p-2 flex items-center justify-center border-2 border-purple-500/20 shadow-lg"><img src="addme.jpg" alt="QR 2" className="w-full h-full opacity-80" /></div><span className="text-xs text-slate-500 font-medium">{t.qrLabel2}</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -568,6 +886,7 @@
                                                 <button onClick={clearAllFrames} className="text-[10px] px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded transition-colors">{t.clearAll}</button>
                                             </div>
                                         </div>
+                                        {/* AI 智能分析按钮 */}
                                         {frames.length>0 && (
                                             <button 
                                                 onClick={runBatchAIAnalysis} 
@@ -575,6 +894,9 @@
                                                 className="w-full mb-3 py-2 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 hover:border-emerald-500/60 text-emerald-300 text-xs font-bold rounded flex items-center justify-center gap-2 transition-all group relative overflow-hidden"
                                             >
                                                 <Sparkles size={14} className="group-hover:text-emerald-200 group-hover:scale-110 transition-transform"/>{t.aiAnalyzeAll}
+                                                <span className="absolute right-3 text-[10px] bg-slate-900/50 px-1.5 rounded text-emerald-400 opacity-80">
+                                                    需消耗 {frames.length} 额度
+                                                </span>
                                             </button>
                                         )}
                                         {selectedFrameIds.size>0 && <div className="flex gap-2 animate-fade-in"><button onClick={()=>{setFrames(frames.filter(f=>!selectedFrameIds.has(f.id)));setSelectedFrameIds(new Set())}} className="flex-1 py-1.5 bg-red-600 text-white text-xs rounded flex items-center justify-center gap-1"><Trash2 size={12}/>{t.deleteSelected} ({selectedFrameIds.size})</button></div>}
@@ -612,6 +934,15 @@
                             </div>
                         </main>
                     </div>
+
+                    {/* 🌟 页面左下角悬浮：更新日志按钮 */}
+                    <button 
+                        onClick={() => setShowUpdate(true)}
+                        className="fixed bottom-6 left-6 z-40 flex items-center gap-2 px-3 py-2 bg-slate-800/80 hover:bg-slate-700/80 backdrop-blur border border-slate-700 rounded-full text-xs text-slate-400 hover:text-slate-200 transition-all shadow-lg group"
+                    >
+                        <Info size={16} className="text-indigo-400 group-hover:scale-110 transition-transform" />
+                        <span className="hidden sm:inline font-medium">{t.updateBtn}</span>
+                    </button>
                 </div>
             );
         };
